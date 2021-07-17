@@ -1,7 +1,4 @@
-tableextended = dofile("../shared/table-extended.lua")
-fileextended = dofile("../shared/file-extended.lua")
-
-local pathToFolder = "C:\\Users\\jonat\\AppData\\Roaming\\Aseprite"
+local pathToFolder = "%AppData%/Aseprite"
 
 local mainWindowBounds
 
@@ -16,17 +13,140 @@ local compiledColorGroups = {colorGroup01,colorGroup02,colorGroup03,colorGroup04
 local compiledColorGroupsWithKey = {group1=colorGroup01,group2=colorGroup02,group3=colorGroup03,group4=colorGroup04,group5=colorGroup05,group6=colorGroup06}
 local dropDownOptions = {colorGroup01[1],colorGroup02[1],colorGroup03[1],colorGroup04[1],colorGroup05[1],colorGroup06[1]}
 
+--TABLE UTILS
+
+function exportstring( s )
+    return string.format("%q", s)
+end
+
+--// The Save Function
+function table.save(  tbl,filename )
+  local charS,charE = "   ","\n"
+  local file,err = io.open( filename, "wb" )
+  if err then return err end
+
+  -- initiate variables for save procedure
+  local tables,lookup = { tbl },{ [tbl] = 1 }
+  file:write( "return {"..charE )
+
+  for idx,t in ipairs( tables ) do
+     file:write( "-- Table: {"..idx.."}"..charE )
+     file:write( "{"..charE )
+     local thandled = {}
+
+     for i,v in ipairs( t ) do
+        thandled[i] = true
+        local stype = type( v )
+        -- only handle value
+        if stype == "table" then
+           if not lookup[v] then
+              table.insert( tables, v )
+              lookup[v] = #tables
+           end
+           file:write( charS.."{"..lookup[v].."},"..charE )
+        elseif stype == "string" then
+           file:write(  charS..exportstring( v )..","..charE )
+        elseif stype == "number" then
+           file:write(  charS..tostring( v )..","..charE )
+        end
+     end
+
+     for i,v in pairs( t ) do
+        -- escape handled values
+        if (not thandled[i]) then
+        
+           local str = ""
+           local stype = type( i )
+           -- handle index
+           if stype == "table" then
+              if not lookup[i] then
+                 table.insert( tables,i )
+                 lookup[i] = #tables
+              end
+              str = charS.."[{"..lookup[i].."}]="
+           elseif stype == "string" then
+              str = charS.."["..exportstring( i ).."]="
+           elseif stype == "number" then
+              str = charS.."["..tostring( i ).."]="
+           end
+        
+           if str ~= "" then
+              stype = type( v )
+              -- handle value
+              if stype == "table" then
+                 if not lookup[v] then
+                    table.insert( tables,v )
+                    lookup[v] = #tables
+                 end
+                 file:write( str.."{"..lookup[v].."},"..charE )
+              elseif stype == "string" then
+                 file:write( str..exportstring( v )..","..charE )
+              elseif stype == "number" then
+                 file:write( str..tostring( v )..","..charE )
+              end
+           end
+        end
+     end
+     file:write( "},"..charE )
+  end
+  file:write( "}" )
+  file:close()
+end
+   
+--// The Load Function
+function table.load( sfile )
+  local ftables,err = loadfile( sfile )
+  if err then return _,err end
+  local tables = ftables()
+  for idx = 1,#tables do
+     local tolinki = {}
+     for i,v in pairs( tables[idx] ) do
+        if type( v ) == "table" then
+           tables[idx][i] = tables[v[1]]
+        end
+        if type( i ) == "table" and tables[i[1]] then
+           table.insert( tolinki,{ i,tables[i[1]] } )
+        end
+     end
+     -- link indices
+     for _,v in ipairs( tolinki ) do
+        tables[idx][v[2]],tables[idx][v[1]] =  tables[idx][v[1]],nil
+     end
+  end
+  return tables[1]
+end
+
+function table.tostring( tbl )
+  local result, done = {}, {}
+  for k, v in ipairs( tbl ) do
+    table.insert( result, table.val_to_str( v ) )
+    done[ k ] = true
+  end
+  for k, v in pairs( tbl ) do
+    if not done[ k ] then
+      table.insert( result,
+        table.key_to_str( k ) .. "=" .. table.val_to_str( v ) )
+    end
+  end
+  return "{" .. table.concat( result, "," ) .. "}"
+end
+
+function fileExists(name)
+    local f=io.open(name,"r")
+    if f~=nil then io.close(f) return true else return false end
+ end
+
 function saveColorGroup(name)
 	local path = pathToFolder.. "\\groups\\" .. name .. ".lua"
     if (name ~= "")
         then
-            if (fileextended.fileExists(path))
+            if (fileExists(path))
                 then
                     app.alert("TODO: Confirm ovewrite file dialog box")
                 else
-                    os.execute("mkdir ".. pathToFolder.."\\groups")
-                    tableextended.save(compiledColorGroups, path)
-                    app.alert("Saved.")
+                            os.execute("mkdir ".. pathToFolder.."\\groups")
+                            table.save(compiledColorGroups, path)
+                            app.alert("Saved.")
                 end
         else
             app.alert("Could not save. (Reason: No Entry.)")
@@ -35,9 +155,9 @@ end
 
 function loadColorGroup(name)
 	local path = pathToFolder.. "\\groups\\" .. name .. ".lua"
-    if (fileextended.fileExists(path))
+    if (fileExists(path))
         then
-        	compiledColorGroups = tableextended.load(path)
+        	compiledColorGroups = table.load(path)
         	colorGroup01 = compiledColorGroups[1]
         	colorGroup02 = compiledColorGroups[2]
         	colorGroup03 = compiledColorGroups[3]
@@ -47,6 +167,10 @@ function loadColorGroup(name)
         else
             app.alert("Could not load. (Reason: The file does not exists.)")
         end
+end
+
+function openPathFolder()
+    os.execute("start ".. pathToFolder.."\\groups")
 end
 
 function showdialog()
@@ -270,7 +394,7 @@ return function(dialogtitle)
             focus=false,
             onclick=function()
                 local data = dlg.data
-                fileextended.openPathFolder(pathToFolder)
+                openPathFolder()
             end
         }
 
