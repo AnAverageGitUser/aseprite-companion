@@ -70,17 +70,17 @@ end
 return function(dialogtitle)
     local quickguidetable = {
         {"separator", "Base Color"},
-        {"label", "Shows the current base color used for the shades."},
+        {"label", "-- Shows the current base color used for the shades."},
         {"newrow"},
-        {"label", "[Assign FG Color] will assign the forground color to the base color."},
+        {"label", "-- [Assign FG Color] Assigns the foreground color to the base color."},
         {"separator", "Shades"},
-        {"label", "Current base color is fifth."},
+        {"label", "-- Current base color is fifth."},
         {"newrow"},
-        {"label", "Simply click any color to set it as the foreground color."},
+        {"label", "-- Simply click any color to set it as the foreground color."},
         {"separator", "Values"},
-        {"label", "Use the sliders to adjust the shades HSL values."},
+        {"label", "-- Use the sliders to adjust the shades HSL values."},
         {"newrow"},
-        {"label", "[Reset to Default] will return them to their default values."}
+        {"label", "-- [Reset to Default] Return them to their default values."}
     }
 
     local dlg = Dialog(dialogtitle)
@@ -95,6 +95,7 @@ return function(dialogtitle)
     local s6 = colorshift(c, 1, mathextended:norm(hueshiftvalue, 0, 360) * 2, -mathextended:norm(satshiftvalue, 0, 100) * 1.5, mathextended:norm(lightshiftvalue, 0, 100) * 5)
     local s7 = colorshift(c, 1, mathextended:norm(hueshiftvalue, 0, 360) * 3, mathextended:norm(satshiftvalue, 0, 100) * 2, mathextended:norm(lightshiftvalue, 0, 100) * 8)
 
+    quickguide(dlg, quickguidetable)
     dlg
             :separator{ text = "Base Color" }
             :color{ label = "Current", color = c }
@@ -153,6 +154,5 @@ return function(dialogtitle)
                          showdialog()
                      end
     }
-    quickguide(dlg, quickguidetable)
     return dlg
 end
