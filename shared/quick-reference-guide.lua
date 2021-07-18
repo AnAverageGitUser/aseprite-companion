@@ -4,14 +4,14 @@ return function(dialog, widgetstable)
 
     local guidevisible = false
 
-    function displayguide(visibile)
+    function displayguide(visible)
         local len = tableextended.length(widgetstable)
         for i = 1, len do
             if widgetstable[i][1] ~= "newrow" then
-                dialog:modify{ id= "guide"..tostring(i), visible = visibile, enabled = true }
+                dialog:modify{ id= "guide"..tostring(i), visible = visible, enabled = true }
             end
         end
-        dialog:modify{ id = "resize", visible = visibile, enabled = true }
+        dialog:modify{ id = "resize", visible = visible, enabled = true }
     end
 
     dialog:separator{ text = "Quick Reference Guide"}

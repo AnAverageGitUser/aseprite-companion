@@ -44,7 +44,7 @@ function init(plugin)
                 return
             end
             if app.activeSprite == nil then return end
-            local groupsdialog = colorgroupsdialog("Color Groups")
+            local groupsdialog = colorgroupsdialog("Color Shades")
             groupsdialog:show { wait = false }
         end
     }

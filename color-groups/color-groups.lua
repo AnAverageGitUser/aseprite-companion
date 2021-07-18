@@ -1,20 +1,46 @@
 tableextended = dofile("../shared/table-extended.lua")
 fileextended = dofile("../shared/file-extended.lua")
+colorgroupwidget = dofile("./color-groups-widget.lua")
+colorgrouppages = dofile("./color-groups-pages.lua")
 
 local pathToFolder = "C:\\Users\\jonat\\AppData\\Roaming\\Aseprite"
 
 local mainWindowBounds
 
-local colorGroup01 = {"Group01",0,0,0,0,0,0}
-local colorGroup02 = {"Group02",0,0,0,0,0,0}
-local colorGroup03 = {"Group03",0,0,0,0,0,0}
-local colorGroup04 = {"Group04",0,0,0,0,0,0}
-local colorGroup05 = {"Group05",0,0,0,0,0,0}
-local colorGroup06 = {"Group06",0,0,0,0,0,0}
+local nbcolorgroup = 36
+local groupnameindex = nbcolorgroup + 1
+local activepage = 1
 
-local compiledColorGroups = {colorGroup01,colorGroup02,colorGroup03,colorGroup04,colorGroup05,colorGroup06}
-local compiledColorGroupsWithKey = {group1=colorGroup01,group2=colorGroup02,group3=colorGroup03,group4=colorGroup04,group5=colorGroup05,group6=colorGroup06}
-local dropDownOptions = {colorGroup01[1],colorGroup02[1],colorGroup03[1],colorGroup04[1],colorGroup05[1],colorGroup06[1]}
+function createcolorgroups(nb)
+    local tbl = {}
+    for i=1, nb do
+        table.insert(tbl,{"Group-"..tostring(i)})
+    end
+    return tbl
+end
+
+function insertcolorgroups(tbl)
+    table.insert(tbl,{"Group-"..tostring(groupnameindex)})
+    nbcolorgroup = nbcolorgroup + 1
+    groupnameindex = groupnameindex + 1
+end
+
+function removecolorgroups(tbl, pos)
+    table.remove(tbl, pos)
+    nbcolorgroup = nbcolorgroup - 1
+end
+
+local colorgroups = createcolorgroups(nbcolorgroup)
+
+local shadeselected = colorgroups[1][1]
+
+function getdropdownoptions(tbl)
+    local dropdowntbl = {}
+        for i=1, #tbl do
+            table.insert(dropdowntbl, tbl[i][1])
+        end
+    return dropdowntbl
+end
 
 function saveColorGroup(name)
 	local path = pathToFolder.. "\\groups\\" .. name .. ".lua"
@@ -22,10 +48,17 @@ function saveColorGroup(name)
         then
             if (fileextended.fileExists(path))
                 then
-                    app.alert("TODO: Confirm ovewrite file dialog box")
+                    local result = app.alert{ title="Warning",
+                                              text="Are you sure you want to overwrite this file?",
+                                              buttons={"Yes", "No"}}
+                    if result == 1 then
+                        os.execute("mkdir ".. pathToFolder.."\\groups")
+                        tableextended.save(colorgroups, path)
+                        app.alert("Saved.")
+                    end
                 else
                     os.execute("mkdir ".. pathToFolder.."\\groups")
-                    tableextended.save(compiledColorGroups, path)
+                    tableextended.save(colorgroups, path)
                     app.alert("Saved.")
                 end
         else
@@ -37,13 +70,7 @@ function loadColorGroup(name)
 	local path = pathToFolder.. "\\groups\\" .. name .. ".lua"
     if (fileextended.fileExists(path))
         then
-        	compiledColorGroups = tableextended.load(path)
-        	colorGroup01 = compiledColorGroups[1]
-        	colorGroup02 = compiledColorGroups[2]
-        	colorGroup03 = compiledColorGroups[3]
-        	colorGroup04 = compiledColorGroups[4]
-        	colorGroup05 = compiledColorGroups[5]
-        	colorGroup06 = compiledColorGroups[6]
+        	colorgroups = tableextended.load(path)
         else
             app.alert("Could not load. (Reason: The file does not exists.)")
         end
@@ -55,228 +82,227 @@ function showdialog()
 end
 
 function closedialog(closingdialog)
+    local data = closingdialog.data
+    shadeselected = data.ShadesDropDown
     mainWindowBounds = closingdialog.bounds
     closingdialog:close()
 end
 
 return function(dialogtitle)
-        local dlg = Dialog(dialogtitle)
-        local actSpr = app.activeSprite
-        local actPal = actSpr.palettes[ 1 ]
-
-        function indexToColor(index)
-            local c = actPal:getColor(index)
-            return c
+    local dlg = Dialog(dialogtitle)
+    local actSpr = app.activeSprite
+    local actPal = actSpr.palettes[ 1 ]
+    -- MAIN DIALOG
+    dlg
+            :separator{
+        text="Colors"
+    }
+            :combobox{
+        id="ShadesDropDown",
+        label="Group",
+        option= shadeselected,
+        options= getdropdownoptions(colorgroups)
+    }
+            :button{
+        id="addcolors",
+        text="Add FG Colors",
+        selected=false,
+        focus=false,
+        onclick=function()
+            local data = dlg.data
+            for i=1,nbcolorgroup do
+                if (data.ShadesDropDown == colorgroups[i][1]) then
+                    local selectedColors = app.range.colors
+                    --while #colorgroups[i] > 1 do
+                    --    table.remove(colorgroups[i], 2)
+                    --end
+                    for j=2, #selectedColors + 1 do
+                        table.insert(colorgroups[i], selectedColors[j-1])
+                    end
+                end
+            end
+            closedialog(dlg)
+            showdialog()
         end
-        -- MAIN DIALOG
-        dlg
-                :separator{
-            text="Colors"
-        }
-                :combobox{
-            id="ShadesDropDown",
-            label="Group",
-            options={ colorGroup01[1],colorGroup02[1],colorGroup03[1],colorGroup04[1],colorGroup05[1],colorGroup06[1]}
-        }
-                :button{
-            id="Assign",
-            text="Assign FG Color",
-            selected=false,
-            focus=false,
-            onclick=function()
-                local data = dlg.data
-                for i=1,6 do
-                    if (data.ShadesDropDown == dropDownOptions[i]) then
-                        local c = app.fgColor
-                        local selectedColors = app.range.colors
-                        for j=2,7 do
-                            compiledColorGroupsWithKey["group"..tostring(i)][j] = selectedColors[j-1]
-                        end
+    }
+            :button{
+        id="clearcolors",
+        text="Clear Colors",
+        selected=false,
+        focus=false,
+        onclick=function()
+            local data = dlg.data
+            for i=1,nbcolorgroup do
+                if (data.ShadesDropDown == colorgroups[i][1]) then
+                    while #colorgroups[i] > 1 do
+                        table.remove(colorgroups[i], 2)
                     end
                 end
-                closedialog(dlg)
-                showdialog()
             end
-        }
-                :entry{
-            id="ShadeName",
-            label="Group Name",
-            onclick=function()
-                local data = dlg.data
+            closedialog(dlg)
+            showdialog()
+        end
+    }
+    --[[        :newrow()
+            :button{
+        id="AddGroup",
+        text="Add Group",
+        selected=false,
+        focus=false,
+        onclick=function()
+            insertcolorgroups(colorgroups)
+            closedialog(dlg)
+            showdialog()
+        end
+    }
+            :button{
+        id="RemoveGroup",
+        text="Remove Group",
+        selected=false,
+        focus=false,
+        onclick=function()
+            local data = dlg.data
+            shadeselected = data.ShadesDropDown
+            local pos = 0
+            for i=1, nbcolorgroup do
+                if shadeselected == colorgroups[i][1] then
+                    pos = i
+                end
             end
-        }
-                :button{
-            id="RenameButton",
-            text="Rename",
-            selected=false,
-            focus=false,
-            onclick=function()
-                local data = dlg.data
-                if(data.ShadeName ~= "")
-                then
-                    if (data.ShadesDropDown == colorGroup01[1])
+            removecolorgroups(colorgroups, pos)
+            closedialog(dlg)
+            showdialog()
+        end
+    }]]--
+            :entry{
+        id="ShadeName",
+        label="Group Name",
+        onclick=function()
+        end
+    }
+            :button{
+        id="RenameButton",
+        text="Rename",
+        selected=false,
+        focus=false,
+        onclick=function()
+            local data = dlg.data
+            if(data.ShadeName ~= "")
+            then
+                for i=1, #colorgroups do
+                    if (data.ShadesDropDown == colorgroups[i][1])
                     then
-                        colorGroup01[1] = data.ShadeName
-                    end
-                    if (data.ShadesDropDown == colorGroup02[1])
-                    then
-                        colorGroup02[1] = data.ShadeName
-                    end
-                    if (data.ShadesDropDown == colorGroup03[1])
-                    then
-                        colorGroup03[1] = data.ShadeName
-                    end
-                    if (data.ShadesDropDown == colorGroup04[1])
-                    then
-                        colorGroup04[1] = data.ShadeName
-                    end
-                    if (data.ShadesDropDown == colorGroup05[1])
-                    then
-                        colorGroup05[1] = data.ShadeName
-                    end
-                    if (data.ShadesDropDown == colorGroup06[1])
-                    then
-                        colorGroup06[1] = data.ShadeName
+                        colorgroups[i][1] = data.ShadeName
                     end
                 end
+            end
+            closedialog(dlg)
+            showdialog()
+        end
+    }
+            :separator{
+        text="Save/Load"
+    }
+            :entry{
+        id='Name',
+        label="File Name",
+        text=Name,
+        focus=boolean,
+        onclick=function()
+        end
+    }
+            :button{
+        id="Save",
+        text="Save",
+        selected=false,
+        focus=false,
+        onclick=function()
+            local data = dlg.data
+            saveColorGroup(data.Name)
+        end
+    }
+            :button{
+        id="Load",
+        text="Load",
+        selected=false,
+        focus=false,
+        onclick=function()
+            local data = dlg.data
+            loadColorGroup(data.Name)
+            closedialog(dlg)
+            showdialog()
+        end
+    }
+            :button{
+        id="OpenShadeFolder",
+        text="Open Folder",
+        selected=false,
+        focus=false,
+        onclick=function()
+            fileextended.openPathFolder(pathToFolder)
+        end
+    }
+            :separator{
+        text="Shades"
+    }
+    colorgroupwidget(dlg, nbcolorgroup, colorgroups, actPal)
+            :button{
+        id="Prev",
+        text="Prev",
+        selected=false,
+        focus=false,
+        onclick=function()
+            if activepage ~= 1 then
+                activepage = activepage -1
                 closedialog(dlg)
                 showdialog()
             end
-        }
-                :separator{
-            text="Shades"
-        }
-                :shades{
-            id="Shade1",
-            label=colorGroup01[1],
-            mode="pick",
-            colors={ indexToColor(colorGroup01[2]), indexToColor(colorGroup01[3]), indexToColor(colorGroup01[4]), indexToColor(colorGroup01[5]), indexToColor(colorGroup01[6]), indexToColor(colorGroup01[7])},
-            onclick=function(ev)
-                app.fgColor = ev.color
-            end
-        }
-                :shades{
-            id="Shade2",
-            label=colorGroup02[1],
-            mode="pick",
-            colors={ indexToColor(colorGroup02[2]), indexToColor(colorGroup02[3]), indexToColor(colorGroup02[4]), indexToColor(colorGroup02[5]), indexToColor(colorGroup02[6]), indexToColor(colorGroup02[7])},
-            onclick=function(ev)
-                app.fgColor = ev.color
-            end
-        }
-                :shades{
-            id="Shade3",
-            label=colorGroup03[1],
-            mode="pick",
-            colors={ indexToColor(colorGroup01[2]), indexToColor(colorGroup01[3]), indexToColor(colorGroup01[4]), indexToColor(colorGroup01[5]), indexToColor(colorGroup01[6]), indexToColor(colorGroup01[7])},
-            onclick=function(ev)
-                app.fgColor = ev.color
-            end
-        }
-                :shades{
-            id="Shade4",
-            label=colorGroup04[1],
-            mode="pick",
-            colors={ indexToColor(colorGroup01[2]), indexToColor(colorGroup01[3]), indexToColor(colorGroup01[4]), indexToColor(colorGroup01[5]), indexToColor(colorGroup01[6]), indexToColor(colorGroup01[7])},
-            onclick=function(ev)
-                app.fgColor = ev.color
-            end
-        }
-                :shades{
-            id="Shade5",
-            label=colorGroup05[1],
-            mode="pick",
-            colors={ indexToColor(colorGroup01[2]), indexToColor(colorGroup01[3]), indexToColor(colorGroup01[4]), indexToColor(colorGroup01[5]), indexToColor(colorGroup01[6]), indexToColor(colorGroup01[7])},
-            onclick=function(ev)
-                app.fgColor = ev.color
-            end
-        }
-                :shades{
-            id="Shade6",
-            label=colorGroup06[1],
-            mode="pick",
-            colors={ indexToColor(colorGroup01[2]), indexToColor(colorGroup01[3]), indexToColor(colorGroup01[4]), indexToColor(colorGroup01[5]), indexToColor(colorGroup01[6]), indexToColor(colorGroup01[7])},
-            onclick=function(ev)
-                app.fgColor = ev.color
-            end
-        }
-                :shades{
-            id="Shade7",
-            label=colorGroup06[1],
-            mode="pick",
-            colors={ indexToColor(colorGroup01[2]), indexToColor(colorGroup01[3]), indexToColor(colorGroup01[4]), indexToColor(colorGroup01[5]), indexToColor(colorGroup01[6]), indexToColor(colorGroup01[7])},
-            onclick=function(ev)
-                app.fgColor = ev.color
-            end
-        }
-                :shades{
-            id="Shade8",
-            label=colorGroup06[1],
-            mode="pick",
-            colors={ indexToColor(colorGroup01[2]), indexToColor(colorGroup01[3]), indexToColor(colorGroup01[4]), indexToColor(colorGroup01[5]), indexToColor(colorGroup01[6]), indexToColor(colorGroup01[7])},
-            onclick=function(ev)
-                app.fgColor = ev.color
-            end
-        }
-                :button{
-            id="RefreshAll",
-            text="Refresh All",
-            selected=false,
-            focus=false,
-            onclick=function()
-                closedialog(dlg)
-                actSpr = app.activeSprite
-                actPal = actSpr.palettes[ 1 ]
-                showdialog()
-            end
-        }
-                :separator{
-            text="Save/Load"
-        }
-                :entry{
-            id='Name',
-            label="File Name",
-            text=Name,
-            focus=boolean,
-            onclick=function(ev)
-            end
-        }
-                :button{
-            id="Save",
-            text="Save",
-            selected=false,
-            focus=false,
-            onclick=function()
-                local data = dlg.data
-                saveColorGroup(data.Name)
-            end
-        }
-                :button{
-            id="Load",
-            text="Load",
-            selected=false,
-            focus=false,
-            onclick=function()
-                local data = dlg.data
-                loadColorGroup(data.Name)
+        end
+    }
+            :button{
+        id="Next",
+        text="Next",
+        selected=false,
+        focus=false,
+        onclick=function()
+            if activepage ~= 3 then
+                activepage = activepage + 1
                 closedialog(dlg)
                 showdialog()
             end
-        }
-                :button{
-            id="OpenShadeFolder",
-            text="Open Folder",
-            selected=false,
-            focus=false,
-            onclick=function()
-                local data = dlg.data
-                fileextended.openPathFolder(pathToFolder)
-            end
-        }
+        end
+    }
+    if activepage == 1 then dlg:modify{id="Prev", text=""} else dlg:modify{id="Prev", text="Prev"} end
+    if activepage == 3 then dlg:modify{id="Next", text=""} else dlg:modify{id="Next", text="Next"} end
+    if activepage == 1 then
+        colorgrouppages(dlg,1,12,true)
+        colorgrouppages(dlg,13,24,false)
+        colorgrouppages(dlg,25,36,false)
+    elseif activepage == 2 then
+        colorgrouppages(dlg,1,12,false)
+        colorgrouppages(dlg,13,24,true)
+        colorgrouppages(dlg,25,36,false)
+    elseif activepage == 3 then
+        colorgrouppages(dlg,1,12,false)
+        colorgrouppages(dlg,13,24,false)
+        colorgrouppages(dlg,25,36,true)
+    end
+    --[[:button{
+id="RefreshAll",
+text="Refresh All",
+selected=false,
+focus=false,
+onclick=function()
+closedialog(dlg)
+actSpr = app.activeSprite
+actPal = actSpr.palettes[ 1 ]
+showdialog()
+end
+}]]--
 
-        dlg:show{
-            wait=false,
-            bounds= mainWindowBounds
-        }
+    dlg:show{
+        wait=false,
+        bounds= mainWindowBounds
+    }
     return dlg
 end

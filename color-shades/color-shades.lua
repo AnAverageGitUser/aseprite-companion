@@ -96,7 +96,7 @@ return function(dialogtitle)
     local s7 = colorshift(c, 1, mathextended:norm(hueshiftvalue, 0, 360) * 3, mathextended:norm(satshiftvalue, 0, 100) * 2, mathextended:norm(lightshiftvalue, 0, 100) * 8)
 
     dlg
-            :separator{ text = "Base Color"}
+            :separator{ text = "Base Color" }
             :color{ label = "Current", color = c }
             :button{ text = "Assign FG Color",
                      onclick=function()
