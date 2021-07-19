@@ -1,5 +1,4 @@
 mathextended = dofile("../shared/math-extended.lua")
-quickguide = dofile("../shared/quick-reference-guide.lua")
 tableextended = dofile("../shared/table-extended.lua")
 
 local hueshiftvalue = 10
@@ -7,6 +6,8 @@ local satshiftvalue = 10
 local lightshiftvalue = 10
 local initialbasecolor = Color(199,90,104)
 local c = initialbasecolor
+
+local colorshadesguidevisibility = false
 
 function colorshift(color, light, hueshift, satshift, lightshift)
     -- (light 0 = darker) (light 1 = lighter)
@@ -62,9 +63,9 @@ function colorshift(color, light, hueshift, satshift, lightshift)
     return newcolor
 end
 
-function showdialog()
-    local dlg = colorshadesdialog("Color Shades")
-    dlg:show { wait = false, bounds = dialogbounds }
+function showshadesdialog()
+    local colorshadesdlg = colorshadesdialog("Color Shades")
+    colorshadesdlg:show { wait = false, bounds = dialogbounds }
 end
 
 return function(dialogtitle)
@@ -74,16 +75,16 @@ return function(dialogtitle)
         {"newrow"},
         {"label", "-- [Assign FG Color] Assigns the foreground color to the base color."},
         {"separator", "Shades"},
-        {"label", "-- Current base color is fifth."},
+        {"label", "-- The current base color is fifth."},
         {"newrow"},
         {"label", "-- Simply click any color to set it as the foreground color."},
         {"separator", "Values"},
         {"label", "-- Use the sliders to adjust the shades HSL values."},
         {"newrow"},
-        {"label", "-- [Reset to Default] Return them to their default values."}
+        {"label", "-- [Reset to Default] Return sliders to their default values."}
     }
 
-    local dlg = Dialog(dialogtitle)
+    local colorshadesdlg = Dialog(dialogtitle)
     local square = "□ "
     local checkedsquare = "▣ "
 
@@ -95,16 +96,52 @@ return function(dialogtitle)
     local s6 = colorshift(c, 1, mathextended:norm(hueshiftvalue, 0, 360) * 2, -mathextended:norm(satshiftvalue, 0, 100) * 1.5, mathextended:norm(lightshiftvalue, 0, 100) * 5)
     local s7 = colorshift(c, 1, mathextended:norm(hueshiftvalue, 0, 360) * 3, mathextended:norm(satshiftvalue, 0, 100) * 2, mathextended:norm(lightshiftvalue, 0, 100) * 8)
 
-    quickguide(dlg, quickguidetable)
-    dlg
+    function displaycolorshadesguide(dialog ,widgetstable ,visible)
+        local len = tableextended.length(widgetstable)
+        for i = 1, len do
+            if widgetstable[i][1] ~= "newrow" then
+                dialog:modify{ id= "guide"..tostring(i), visible = visible, enabled = true }
+            end
+        end
+        dialog:modify{ id = "resize", visible = visible, enabled = true }
+    end
+
+    colorshadesdlg:separator{ text = "Quick Reference"}
+    colorshadesdlg:button{ id = "guidebutton", text = "▼",
+                           onclick=function()
+                               if guidevisible == false then
+                                   displaycolorshadesguide(colorshadesdlg,quickguidetable,true)
+                                   guidevisible = true
+                                   colorshadesdlg:modify{ id = "guidebutton", text = "▲"}
+                               else
+                                   displaycolorshadesguide(colorshadesdlg,quickguidetable,false)
+                                   guidevisible = false
+                                   colorshadesdlg:modify{ id = "guidebutton", text = "▼"}
+                               end
+                           end
+    }
+    colorshadesdlg:label{id = "resize", text = "Resize ▶ ▶ ▶ "}
+    for i = 1, tableextended.length(quickguidetable) do
+        if quickguidetable[i][1] == "separator" then
+            colorshadesdlg:separator{ id = "guide"..tostring(i), text = quickguidetable[i][2] }
+        elseif quickguidetable[i][1] == "label" then
+            colorshadesdlg:label{ id = "guide"..tostring(i), text = quickguidetable[i][2] }
+        elseif quickguidetable[i][1] == "newrow" then
+            colorshadesdlg:newrow()
+        end
+    end
+
+    displaycolorshadesguide(colorshadesdlg,quickguidetable,false)
+    
+    colorshadesdlg
             :separator{ text = "Base Color" }
             :color{ label = "Current", color = c }
             :button{ text = "Assign FG Color",
                      onclick=function()
                          c = app.fgColor
-                         dialogbounds = dlg.bounds
-                         dlg:close()
-                         showdialog()
+                         dialogbounds = colorshadesdlg.bounds
+                         colorshadesdlg:close()
+                         showshadesdialog()
                      end
     }
             :separator{ id = "shades", label = "Shades", text = "Shades    " .. square .. square .. square .. square .. checkedsquare .. square .. square .. square }
@@ -117,31 +154,31 @@ return function(dialogtitle)
             :separator{ id = "sliders", label = "Values", text = "Values" }
             :slider{ id = "hueslider", label = "Hue", min = 0, max = 359, value = hueshiftvalue,
                      onrelease = function()
-                         local data = dlg.data
+                         local data = colorshadesdlg.data
                          hueshiftvalue = data.hueslider
-                         dialogbounds = dlg.bounds
-                         dlg:close()
-                         showdialog()
+                         dialogbounds = colorshadesdlg.bounds
+                         colorshadesdlg:close()
+                         showshadesdialog()
                      end
     }
             :newrow()
             :slider{ id = "satslider", label = "Saturation", min = 0, max = 100, value = satshiftvalue,
                      onrelease = function()
-                         local data = dlg.data
+                         local data = colorshadesdlg.data
                          satshiftvalue = data.satslider
-                         dialogbounds = dlg.bounds
-                         dlg:close()
-                         showdialog()
+                         dialogbounds = colorshadesdlg.bounds
+                         colorshadesdlg:close()
+                         showshadesdialog()
                      end
     }
             :newrow()
             :slider{ id = "lightslider", label = "Lightness", min = 0, max = 100, value = lightshiftvalue,
                      onrelease = function()
-                         local data = dlg.data
+                         local data = colorshadesdlg.data
                          lightshiftvalue = data.lightslider
-                         dialogbounds = dlg.bounds
-                         dlg:close()
-                         showdialog()
+                         dialogbounds = colorshadesdlg.bounds
+                         colorshadesdlg:close()
+                         showshadesdialog()
                      end
     }
             :button{ text = "Reset to Default",
@@ -149,10 +186,10 @@ return function(dialogtitle)
                          hueshiftvalue = 10
                          satshiftvalue = 10
                          lightshiftvalue = 10
-                         dialogbounds = dlg.bounds
-                         dlg:close()
-                         showdialog()
+                         dialogbounds = colorshadesdlg.bounds
+                         colorshadesdlg:close()
+                         showshadesdialog()
                      end
     }
-    return dlg
+    return colorshadesdlg
 end

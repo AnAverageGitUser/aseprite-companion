@@ -14,7 +14,7 @@ return function(dialog, widgetstable)
         dialog:modify{ id = "resize", visible = visible, enabled = true }
     end
 
-    dialog:separator{ text = "Quick Reference Guide"}
+    dialog:separator{ text = "Quick Reference"}
     dialog:button{ id = "guidebutton", text = "▼",
         onclick=function()
             if guidevisible == false then

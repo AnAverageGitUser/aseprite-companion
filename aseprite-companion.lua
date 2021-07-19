@@ -12,7 +12,7 @@ function init(plugin)
                 return
             end
             app.alert{title="About Aseprite Companion",
-                      text={"Aseprite Companion v1.0.0",
+                      text={"Aseprite Companion v1.1.0",
                             "An extension providing additional features for Aseprite",
                             "MIT License",
                             "Copyright (c) 2021 Jon Cote" }, buttons="Close"}
@@ -43,8 +43,16 @@ function init(plugin)
             if not app.isUIAvailable then
                 return
             end
-            if app.activeSprite == nil then return end
-            local groupsdialog = colorgroupsdialog("Color Shades")
+            if not app.activeSprite then
+                app.alert { title = "Color Groups",
+                            text = { "-- Tool unavailable --",
+                                     "There is no Sprite being worked on.",
+                                     "Please open a Sprite." },
+                            buttons = alertextended.randomconfirmtext()
+                }
+                return
+            end
+            local groupsdialog = colorgroupsdialog("Color Groups")
             groupsdialog:show { wait = false }
         end
     }

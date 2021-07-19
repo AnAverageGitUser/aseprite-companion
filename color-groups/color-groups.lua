@@ -2,15 +2,15 @@ tableextended = dofile("../shared/table-extended.lua")
 fileextended = dofile("../shared/file-extended.lua")
 colorgroupswidget = dofile("./color-groups-widget.lua")
 colorgroupspage = dofile("./color-groups-pages.lua")
-quickguide = dofile("../shared/quick-reference-guide.lua")
+alertextended = dofile("../shared/alert-extended.lua")
 
-local pathtofolder = "C:\\Users\\jonat\\AppData\\Roaming\\Aseprite"
+local pathtofolder = app.fs.userConfigPath
 
 local dialogbounds
 local nbcolorgroup = 30
 local activepage = 1
 local editorvisible = true
-local colorgroups = {{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},}
+local colorgroups = {}
 
 function createcolorgroups(nb)
     local tbl = {}
@@ -36,69 +36,96 @@ function savecolorgroups(name)
     local path = pathtofolder .. "\\groups\\" .. name .. ".lua"
     if (name ~= "")
     then
-        if (fileextended.fileExists(path))
+        if (fileextended.fileexists(path))
         then
-            local result = app.alert { title = "Warning",
-                                       text = "Are you sure you want to overwrite this file?",
+            local result = app.alert { title = "Color Groups",
+                                       text = {"A file with the same name already exsists","Are you sure you want to overwrite this file?"},
                                        buttons = { "Yes", "No" } }
             if result == 1 then
                 os.execute("mkdir " .. pathtofolder .. "\\groups")
                 tableextended.save(colorgroups, path)
-                app.alert("Saved.")
+                app.alert { title = "Color Groups",
+                            text = { "-- Save successful --"},
+                            buttons = alertextended.randomconfirmtext()
+                }
             end
         else
             os.execute("mkdir " .. pathtofolder .. "\\groups")
             tableextended.save(colorgroups, path)
-            app.alert("Saved.")
+            app.alert { title = "Color Groups",
+                        text = { "-- Save successful --"},
+                        buttons = alertextended.randomconfirmtext()
+            }
         end
     else
-        app.alert("Could not save. (Reason: No Entry.)")
+        app.alert { title = "Color Groups",
+                    text = { "-- Save failed --",
+                             "File Name entry is empty.",
+                             "Please specify a name." },
+                    buttons = alertextended.randomconfirmtext()
+        }
     end
 end
 
 function loadcolorgroups(name)
     local path = pathtofolder .. "\\groups\\" .. name .. ".lua"
-    if (fileextended.fileExists(path))
+    if (fileextended.fileexists(path))
     then
         colorgroups = tableextended.load(path)
     else
-        app.alert("Could not load. (Reason: The file does not exists.)")
+        app.alert { title = "Color Groups",
+                    text = { "-- Load failed --",
+                             "File Name entry don't match any existing file.",
+                             "Please specify an existing file name. You may use [Open Folder] to find the file name." },
+                    buttons = alertextended.randomconfirmtext()
+        }
     end
 end
 
-function showdialog()
-    local dlg = colorgroupsdialog("Color Groups")
-    editormode(dlg, editorvisible)
-    dlg:show { wait = false, bounds = dialogbounds }
+function showgroupsdialog()
+    local colorgroupsdlg = colorgroupsdialog("Color Groups")
+    editormode(colorgroupsdlg, editorvisible)
+    colorgroupsdlg:show { wait = false, bounds = dialogbounds }
 end
 
-function closedialog(closingdialog)
+function closegroupsdialog(closingdialog, renamed)
     local data = closingdialog.data
-    selectedgroup = data.groupsdropdown
+    if renamed == true then
+        selectedgroup = data.groupname
+    else
+        selectedgroup = data.groupsdropdown
+
+    end
     dialogbounds = closingdialog.bounds
     closingdialog:close()
 end
 
-function editormode(dialog,visible)
+function editormode(dialog, visible)
     editorvisible = visible
     local text = ""
-    if visible == true then text = "Edit" else text = "Create" end
-    dialog:modify{ id = "modebutton", text = text}
-    dialog:modify{ id = "groupsdropdown", visible = visible}
-    dialog:modify{ id = "addcolors", visible = visible}
-    dialog:modify{ id = "clearcolors", visible = visible}
-    dialog:modify{ id = "groupname", visible = visible}
-    dialog:modify{ id = "renamebutton", visible = visible}
-    dialog:modify{ id = "filename", visible = visible}
-    dialog:modify{ id = "save", visible = visible}
-    dialog:modify{ id = "load", visible = visible}
-    dialog:modify{ id = "openpathfolder", visible = visible}
+    if visible == true then
+        text = "Enable Create Mode"
+    else
+        text = "Enable Edit Mode"
+    end
+    dialog:modify { id = "modebutton", text = text }
+    dialog:modify { id = "groupsdropdown", visible = visible }
+    dialog:modify { id = "addcolors", visible = visible }
+    dialog:modify { id = "clearcolors", visible = visible }
+    dialog:modify { id = "groupname", visible = visible }
+    dialog:modify { id = "renamebutton", visible = visible }
+    dialog:modify { id = "filename", visible = visible }
+    dialog:modify { id = "save", visible = visible }
+    dialog:modify { id = "load", visible = visible }
+    dialog:modify { id = "openpathfolder", visible = visible }
 end
 
 return function(dialogtitle)
     local quickguidetable = {
         { "separator", "Mode" },
-        { "label", "-- [Add Colors] Adds selected colors from palette to the selected group." },
+        { "label", "-- Select the group to edit." },
+        { "newrow" },
+        { "label", "-- [Add Colors] Adds selected color/s from palette to the selected group." },
         { "newrow" },
         { "label", "-- [Clear Colors] Clears all colors from selected group." },
         { "newrow" },
@@ -108,33 +135,73 @@ return function(dialogtitle)
         { "newrow" },
         { "label", "-- [Load] Loads the {File Name} entry." },
         { "newrow" },
-        { "label", "-- [Open Folder] Open your color groups folder. Useful to get an existing file name to load" },
+        { "label", "-- [Open Folder] Open your color groups folder. Useful to get an existing file name to load." },
         { "newrow" },
         { "separator", "Groups" },
         { "label", "-- Simply click any color to set it as the foreground color." },
         { "newrow" },
-        { "label", "-- [Refresh] Refresh all the groups colors. Useful if palette was modifed" },
+        { "label", "-- [Refresh] Refresh all the groups colors. Useful if palette was modified." },
         { "newrow" },
-        { "label", "-- [Prev] [Next] Cycle color groups pages" },
+        { "label", "-- [Prev] [Next] Cycle color groups pages." },
+        { "separator", "Notes" },
+        { "label", "-- This tool only saves the colors indexes. Any palette modifications will affect your color groups." },
     }
 
-    local dlg = Dialog(dialogtitle)
+    local colorgroupsdlg = Dialog(dialogtitle)
     local actspr = app.activeSprite
     local actpal = actspr.palettes[1]
 
-    quickguide(dlg, quickguidetable)
-    dlg
+    local guidevisible = false
+
+    function displaycolorgroupsguide(dialog ,widgetstable ,visible)
+        local len = tableextended.length(widgetstable)
+        for i = 1, len do
+            if widgetstable[i][1] ~= "newrow" then
+                dialog:modify{ id= "guide"..tostring(i), visible = visible, enabled = true }
+            end
+        end
+        dialog:modify{ id = "resize", visible = visible, enabled = true }
+    end
+
+    colorgroupsdlg:separator{ text = "Quick Reference"}
+    colorgroupsdlg:button{ id = "guidebutton", text = "▼",
+                   onclick=function()
+                       if guidevisible == false then
+                           displaycolorgroupsguide(colorgroupsdlg,quickguidetable,true)
+                           guidevisible = true
+                           colorgroupsdlg:modify{ id = "guidebutton", text = "▲"}
+                       else
+                           displaycolorgroupsguide(colorgroupsdlg,quickguidetable,false)
+                           guidevisible = false
+                           colorgroupsdlg:modify{ id = "guidebutton", text = "▼"}
+                       end
+                   end
+    }
+    colorgroupsdlg:label{id = "resize", text = "Resize ▶ ▶ ▶ "}
+    for i = 1, tableextended.length(quickguidetable) do
+        if quickguidetable[i][1] == "separator" then
+            colorgroupsdlg:separator{ id = "guide"..tostring(i), text = quickguidetable[i][2] }
+        elseif quickguidetable[i][1] == "label" then
+            colorgroupsdlg:label{ id = "guide"..tostring(i), text = quickguidetable[i][2] }
+        elseif quickguidetable[i][1] == "newrow" then
+            colorgroupsdlg:newrow()
+        end
+    end
+
+    displaycolorgroupsguide(colorgroupsdlg,quickguidetable,false)
+
+    colorgroupsdlg
             :separator {
         text = "Mode"
     }
-            :button{ id = "modebutton", text = "Edit",
-                     onclick=function()
-                         if editorvisible == false then
-                             editormode(dlg,true)
-                         else
-                             editormode(dlg,false)
-                         end
-                     end
+            :button { id = "modebutton", text = "Enable Create Mode",
+                      onclick = function()
+                          if editorvisible == false then
+                              editormode(colorgroupsdlg, true)
+                          else
+                              editormode(colorgroupsdlg, false)
+                          end
+                      end
     }
             :combobox {
         id = "groupsdropdown",
@@ -148,7 +215,7 @@ return function(dialogtitle)
         selected = false,
         focus = false,
         onclick = function()
-            local data = dlg.data
+            local data = colorgroupsdlg.data
             for i = 1, nbcolorgroup do
                 if (data.groupsdropdown == colorgroups[i][1]) then
                     local selectedColors = app.range.colors
@@ -160,8 +227,8 @@ return function(dialogtitle)
                     end
                 end
             end
-            closedialog(dlg)
-            showdialog()
+            closegroupsdialog(colorgroupsdlg)
+            showgroupsdialog()
         end
     }
             :button {
@@ -170,7 +237,7 @@ return function(dialogtitle)
         selected = false,
         focus = false,
         onclick = function()
-            local data = dlg.data
+            local data = colorgroupsdlg.data
             for i = 1, nbcolorgroup do
                 if (data.groupsdropdown == colorgroups[i][1]) then
                     while #colorgroups[i] > 1 do
@@ -178,8 +245,8 @@ return function(dialogtitle)
                     end
                 end
             end
-            closedialog(dlg)
-            showdialog()
+            closegroupsdialog(colorgroupsdlg)
+            showgroupsdialog()
         end
     }
             :entry {
@@ -194,7 +261,7 @@ return function(dialogtitle)
         selected = false,
         focus = false,
         onclick = function()
-            local data = dlg.data
+            local data = colorgroupsdlg.data
             if (data.groupname ~= "")
             then
                 for i = 1, #colorgroups do
@@ -204,8 +271,8 @@ return function(dialogtitle)
                     end
                 end
             end
-            closedialog(dlg)
-            showdialog()
+            closegroupsdialog(colorgroupsdlg, true)
+            showgroupsdialog()
         end
     }
             :entry {
@@ -221,7 +288,7 @@ return function(dialogtitle)
         selected = false,
         focus = false,
         onclick = function()
-            local data = dlg.data
+            local data = colorgroupsdlg.data
             savecolorgroups(data.filename)
         end
     }
@@ -231,10 +298,10 @@ return function(dialogtitle)
         selected = false,
         focus = false,
         onclick = function()
-            local data = dlg.data
+            local data = colorgroupsdlg.data
             loadcolorgroups(data.filename)
-            closedialog(dlg)
-            showdialog()
+            closegroupsdialog(colorgroupsdlg)
+            showgroupsdialog()
         end
     }
             :button {
@@ -243,23 +310,23 @@ return function(dialogtitle)
         selected = false,
         focus = false,
         onclick = function()
-            fileextended.openPathFolder(pathtofolder)
+            fileextended.openpathfolder(pathtofolder)
         end
     }
             :separator {
         text = "Groups"
     }
-    colorgroupswidget(dlg, nbcolorgroup, colorgroups, actpal)
+    colorgroupswidget(colorgroupsdlg, nbcolorgroup, colorgroups, actpal)
             :button {
         id = "refresh",
         text = "Refresh",
         selected = false,
         focus = false,
         onclick = function()
-            closedialog(dlg)
+            closegroupsdialog(colorgroupsdlg)
             actspr = app.activeSprite
             actpal = actspr.palettes[1]
-            showdialog()
+            showgroupsdialog()
         end
     }
             :newrow()
@@ -271,8 +338,8 @@ return function(dialogtitle)
         onclick = function()
             if activepage ~= 1 then
                 activepage = activepage - 1
-                closedialog(dlg)
-                showdialog()
+                closegroupsdialog(colorgroupsdlg)
+                showgroupsdialog()
             end
         end
     }
@@ -284,39 +351,39 @@ return function(dialogtitle)
         onclick = function()
             if activepage ~= 3 then
                 activepage = activepage + 1
-                closedialog(dlg)
-                showdialog()
+                closegroupsdialog(colorgroupsdlg)
+                showgroupsdialog()
             end
         end
     }
 
     if activepage == 1 then
-        dlg:modify { id = "Prev", text = "" }
+        colorgroupsdlg:modify { id = "Prev", text = "" }
     else
-        dlg:modify { id = "Prev", text = "Prev" }
+        colorgroupsdlg:modify { id = "Prev", text = "Prev" }
     end
     if activepage == 3 then
-        dlg:modify { id = "Next", text = "" }
+        colorgroupsdlg:modify { id = "Next", text = "" }
     else
-        dlg:modify { id = "Next", text = "Next" }
+        colorgroupsdlg:modify { id = "Next", text = "Next" }
     end
     if activepage == 1 then
-        colorgroupspage(dlg, 1, 10, true)
-        colorgroupspage(dlg, 11, 20, false)
-        colorgroupspage(dlg, 21, 30, false)
+        colorgroupspage(colorgroupsdlg, 1, 10, true)
+        colorgroupspage(colorgroupsdlg, 11, 20, false)
+        colorgroupspage(colorgroupsdlg, 21, 30, false)
     elseif activepage == 2 then
-        colorgroupspage(dlg, 1, 10, false)
-        colorgroupspage(dlg, 11, 20, true)
-        colorgroupspage(dlg, 21, 30, false)
+        colorgroupspage(colorgroupsdlg, 1, 10, false)
+        colorgroupspage(colorgroupsdlg, 11, 20, true)
+        colorgroupspage(colorgroupsdlg, 21, 30, false)
     elseif activepage == 3 then
-        colorgroupspage(dlg, 1, 10, false)
-        colorgroupspage(dlg, 11, 20, false)
-        colorgroupspage(dlg, 21, 30, true)
+        colorgroupspage(colorgroupsdlg, 1, 10, false)
+        colorgroupspage(colorgroupsdlg, 11, 20, false)
+        colorgroupspage(colorgroupsdlg, 21, 30, true)
     end
 
-    dlg:show {
+    colorgroupsdlg:show {
         wait = false,
         bounds = dialogbounds
     }
-    return dlg
+    return colorgroupsdlg
 end

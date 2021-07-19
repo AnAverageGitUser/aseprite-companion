@@ -1,11 +1,11 @@
 local fileextended = {}
 
-function fileextended.fileExists(name)
+function fileextended.fileexists(name)
     local f=io.open(name,"r")
     if f~=nil then io.close(f) return true else return false end
 end
 
-function fileextended.openPathFolder(path)
+function fileextended.openpathfolder(path)
     os.execute("start ".. path.."\\groups")
 end
 
