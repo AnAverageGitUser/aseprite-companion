@@ -194,7 +194,7 @@ return function(dialogtitle)
             :separator {
         text = "Mode"
     }
-            :button { id = "modebutton", text = "Enable Create Mode",
+            :button { id = "modebutton", text = "Enable Edit Mode",
                       onclick = function()
                           if editorvisible == false then
                               editormode(colorgroupsdlg, true)
