@@ -4,7 +4,7 @@ colorgroupsdialog = dofile("./color-groups/color-groups.lua")
 function init(plugin)
     plugin:newCommand {
         id = "aseprite-companion",
-        title = "[Aseprite Companion] ------------",
+        title = "[Aseprite Companion]",
         group = "sprite_crop",
         onclick = function()
             -- Check is UI available
@@ -12,7 +12,7 @@ function init(plugin)
                 return
             end
             app.alert{title="About Aseprite Companion",
-                      text={"Aseprite Companion v1.1.0",
+                      text={"Aseprite Companion v1.1.1",
                             "An extension providing additional features for Aseprite",
                             "MIT License",
                             "Copyright (c) 2021 Jon Cote" }, buttons="Close"}

@@ -77,6 +77,8 @@ return function(dialogtitle)
         {"separator", "Shades"},
         {"label", "-- The current base color is fifth."},
         {"newrow"},
+        {"label", "-- [Add Shades to Palette] Add the shades to the current palette."},
+        {"newrow"},
         {"label", "-- Simply click any color to set it as the foreground color."},
         {"separator", "Values"},
         {"label", "-- Use the sliders to adjust the shades HSL values."},
@@ -144,11 +146,34 @@ return function(dialogtitle)
                          showshadesdialog()
                      end
     }
-            :separator{ id = "shades", label = "Shades", text = "Shades    " .. square .. square .. square .. square .. checkedsquare .. square .. square .. square }
+            :separator{ id = "shades", label = "Shades", text = "Shades"}
             :shades{id='sha', colors={ s1, s2, s3, s4, c, s5, s6, s7 },
                     onclick=function(ev)
                         app.fgColor=ev.color
                     end
+    }
+            :newrow()
+            :button{ text = "Add Shades to Palette",
+                     onclick=function()
+                         local currentshade = Color(255,255,255)
+                         for i = 1, 9 do
+                             if i == 1 then currentshade = s1
+                             elseif i == 2 then currentshade = s2
+                             elseif i == 3 then currentshade = s3
+                             elseif i == 4 then currentshade = s4
+                             elseif i == 5 then currentshade = c
+                             elseif i == 6 then currentshade = s5
+                             elseif i == 7 then currentshade = s6
+                             elseif i == 8 then currentshade = s7
+                             end
+                             app.command.AddColor {
+                             color = currentshade
+                             }
+                             end
+                             dialogbounds = colorshadesdlg.bounds
+                             colorshadesdlg:close()
+                             showshadesdialog()
+                             end
     }
             :newrow()
             :separator{ id = "sliders", label = "Values", text = "Values" }

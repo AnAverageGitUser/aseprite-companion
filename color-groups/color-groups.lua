@@ -219,11 +219,8 @@ return function(dialogtitle)
             for i = 1, nbcolorgroup do
                 if (data.groupsdropdown == colorgroups[i][1]) then
                     local selectedColors = app.range.colors
-                    --while #colorgroups[i] > 1 do
-                    --    table.remove(colorgroups[i], 2)
-                    --end
-                    for j = 2, #selectedColors + 1 do
-                        table.insert(colorgroups[i], selectedColors[j - 1])
+                    for j = 1, #selectedColors do
+                        table.insert(colorgroups[i], selectedColors[j])
                     end
                 end
             end
