@@ -7,10 +7,13 @@ alertextended = dofile("../shared/alert-extended.lua")
 local pathtofolder = app.fs.userConfigPath
 
 local dialogbounds
-local nbcolorgroup = 30
 local activepage = 1
 local editorvisible = true
 local colorgroups = {}
+
+local items_per_page = 10
+local total_pages = 10
+local nbcolorgroup = items_per_page * total_pages
 
 function createcolorgroups(nb)
     local tbl = {}
@@ -311,6 +314,7 @@ return function(dialogtitle)
         end
     }
             :separator {
+        id = "groupsseparator",
         text = "Groups"
     }
     colorgroupswidget(colorgroupsdlg, nbcolorgroup, colorgroups, actpal)
@@ -333,11 +337,13 @@ return function(dialogtitle)
         selected = false,
         focus = false,
         onclick = function()
-            if activepage ~= 1 then
+            if activepage == 1 then
+                activepage = total_pages
+            else
                 activepage = activepage - 1
-                closegroupsdialog(colorgroupsdlg)
-                showgroupsdialog()
             end
+            closegroupsdialog(colorgroupsdlg)
+            showgroupsdialog()
         end
     }
             :button {
@@ -346,37 +352,24 @@ return function(dialogtitle)
         selected = false,
         focus = false,
         onclick = function()
-            if activepage ~= 3 then
+            if activepage == total_pages then
+                activepage = 1
+            else
                 activepage = activepage + 1
-                closegroupsdialog(colorgroupsdlg)
-                showgroupsdialog()
             end
+            closegroupsdialog(colorgroupsdlg)
+            showgroupsdialog()
         end
     }
 
-    if activepage == 1 then
-        colorgroupsdlg:modify { id = "Prev", text = "" }
-    else
-        colorgroupsdlg:modify { id = "Prev", text = "Prev" }
-    end
-    if activepage == 3 then
-        colorgroupsdlg:modify { id = "Next", text = "" }
-    else
-        colorgroupsdlg:modify { id = "Next", text = "Next" }
-    end
-    if activepage == 1 then
-        colorgroupspage(colorgroupsdlg, 1, 10, true)
-        colorgroupspage(colorgroupsdlg, 11, 20, false)
-        colorgroupspage(colorgroupsdlg, 21, 30, false)
-    elseif activepage == 2 then
-        colorgroupspage(colorgroupsdlg, 1, 10, false)
-        colorgroupspage(colorgroupsdlg, 11, 20, true)
-        colorgroupspage(colorgroupsdlg, 21, 30, false)
-    elseif activepage == 3 then
-        colorgroupspage(colorgroupsdlg, 1, 10, false)
-        colorgroupspage(colorgroupsdlg, 11, 20, false)
-        colorgroupspage(colorgroupsdlg, 21, 30, true)
-    end
+    colorgroupsdlg:modify { id = "Prev", text = "Prev" }
+    colorgroupsdlg:modify { id = "Next", text = "Next" }
+
+    colorgroupsdlg:modify { id = "groupsseparator", text = "Groups - Page "..activepage }
+
+    local first_active_group = (activepage - 1) * items_per_page + 1
+    colorgroupspage(colorgroupsdlg, nbcolorgroup, first_active_group, items_per_page)
+    colorgroupspage(colorgroupsdlg, nbcolorgroup, first_active_group, items_per_page)
 
     colorgroupsdlg:show {
         wait = false,
