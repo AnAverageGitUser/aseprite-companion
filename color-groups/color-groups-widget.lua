@@ -12,7 +12,7 @@ return function(dialog, nb, colorgroups, pal)
     function indexToColor(index)
         local ncolors = #actPal
         local c = nil
-        if index < ncolors - 1 then
+        if index < ncolors then
             c = actPal:getColor(index)
         else
             c = actPal:getColor(0)
