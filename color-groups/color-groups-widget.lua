@@ -27,7 +27,11 @@ return function(dialog, nb, colorgroups, pal)
             mode = "pick",
             colors = getshadecolortable(colorgroups[i]),
             onclick = function(ev)
-                app.fgColor = ev.color
+                if ev.button == MouseButton.LEFT then
+                    app.fgColor = ev.color
+                elseif ev.button == MouseButton.RIGHT then
+                    app.bgColor = ev.color
+                end
             end
         }
     end
