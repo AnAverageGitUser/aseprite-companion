@@ -13,6 +13,7 @@ Thanks to Jon Cote for their work on this aseprite extension / plugin.
 ### Changelog
 - branch master
   - Breaking Change: the save file format changed from ".lua" to ".json", old save files will have to be recreated from scratch
+  - Breaking Change: the color groups now use the RGBA color values instead of the palette indices, this makes color group usage more portable between sprites and makes palette syncing unnecessary
   - Performance: performance is not (significantly) impaired by the number of color groups anymore
   - Changed: increased number of color groups to 300
   - Changed: color group page navigation

@@ -170,8 +170,15 @@ function create_color_groups_dialog(dialog)
                 local data = dialog.data
                 local group_idx = get_dropdown_table_index(data.groupsdropdown)
                 local selectedColors = app.range.colors
+                local palette = app.sprite.palettes[1]
                 for j = 1, #selectedColors do
-                    table.insert(color_groups[group_idx].colors, selectedColors[j])
+                    local color = palette:getColor(selectedColors[j])
+                    table.insert(color_groups[group_idx].colors, {
+                        r = color.red,
+                        g = color.green,
+                        b = color.blue,
+                        a = color.alpha,
+                    })
                 end
                 update_groups_dialog(dialog)
             end

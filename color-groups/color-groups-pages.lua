@@ -4,18 +4,10 @@ return function(dialog, num_color_groups_per_page, color_groups, active_page, fn
     function get_shade_color_table(tbl)
         local shade_table = {}
         for i = 1, #tbl do
-            table.insert(shade_table, index_to_color(tbl[i]))
+            local color = tbl[i]
+            table.insert(shade_table, Color{ r=color.r, g=color.g, b=color.b, a=color.a })
         end
         return shade_table
-    end
-
-    function index_to_color(index)
-        local palette = app.sprite.palettes[1]
-        if index < #palette then
-            return palette:getColor(index)
-        else
-            return palette:getColor(0)
-        end
     end
 
     local page_start_index = num_color_groups_per_page * (active_page - 1) + 1
