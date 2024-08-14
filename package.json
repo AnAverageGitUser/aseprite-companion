@@ -1,0 +1,24 @@
+{
+  "name": "aseprite-companion",
+  "displayName": "Aseprite Companion",
+  "description": "An extension providing additional features for Aseprite",
+  "version": "2.0.0",
+  "author": {
+    "name": "Jon Cote",
+    "email": "contact@joncote.com",
+    "url": "https://joncote.itch.io/"
+  },
+  "contributors": [],
+  "publisher": "",
+  "license": "MIT license",
+  "categories": [
+    "Scripts"
+  ],
+  "contributes": {
+    "scripts": [
+      {
+        "path": "./aseprite-companion.lua"
+      }
+    ]
+  }
+}

@@ -11,6 +11,12 @@ I downloaded the original here: https://joncote.itch.io/aseprite-companion
 Thanks to Jon Cote for their work on this aseprite extension / plugin.
 
 ### Changelog
+- Planned / Ideas
+  - Planned: button for color group in shading tool (automatically adds color group to palette and selects shading tool with selection)
+    - switch between pencil mode (single color selection) and shading mode
+    - swap palette of selected layer
+  - Planned: add labels to color groups
+  - Planned: search for color groups by labels
 - branch master
   - Breaking Change: the save file format changed from ".lua" to ".json", old save files will have to be recreated from scratch
   - Breaking Change: the color groups now use the RGBA color values instead of the palette indices, this makes color group usage more portable between sprites and makes palette syncing unnecessary
