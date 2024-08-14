@@ -14,6 +14,7 @@ Thanks to Jon Cote for their work on this aseprite extension / plugin.
 - branch master
   - Breaking Change: the save file format changed from ".lua" to ".json", old save files will have to be recreated from scratch
   - Performance: performance is not (significantly) impaired by the number of color groups anymore
+  - Changed: increased number of color groups to 300
   - Changed: color group page navigation
   - Changed: selection of active color group: the dropdown now only lists the visible color groups
   - Changed: the file name field is not cleared anymore upon loading of a color group file

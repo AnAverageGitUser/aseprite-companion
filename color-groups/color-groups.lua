@@ -13,7 +13,7 @@ local edit_mode_visible = true
 
 local selected_group_index = 1
 local num_color_groups_per_page = 10
-local num_color_groups = 278
+local num_color_groups = 300
 local last_page = math.tointeger((num_color_groups + num_color_groups_per_page - 1) / num_color_groups_per_page)
 
 function create_color_groups(num_table_entries)
