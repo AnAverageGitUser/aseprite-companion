@@ -1,11 +1,11 @@
-tableextended = dofile("../shared/table-extended.lua")
+table_extended = dofile("../shared/table-extended.lua")
 
 return function(dialog, widgetstable)
 
     local guidevisible = false
 
     function displayguide(visible)
-        local len = tableextended.length(widgetstable)
+        local len = table_extended.length(widgetstable)
         for i = 1, len do
             if widgetstable[i][1] ~= "newrow" then
                 dialog:modify{ id= "guide"..tostring(i), visible = visible, enabled = true }
@@ -29,7 +29,7 @@ return function(dialog, widgetstable)
     end
     }
     dialog:label{id = "resize", text = "Resize ▶ ▶ ▶ "}
-    for i = 1, tableextended.length(widgetstable) do
+    for i = 1, table_extended.length(widgetstable) do
         if widgetstable[i][1] == "separator" then
             dialog:separator{ id = "guide"..tostring(i), text = widgetstable[i][2] }
         elseif widgetstable[i][1] == "label" then

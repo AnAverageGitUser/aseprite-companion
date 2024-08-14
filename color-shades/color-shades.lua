@@ -1,5 +1,5 @@
 mathextended = dofile("../shared/math-extended.lua")
-tableextended = dofile("../shared/table-extended.lua")
+table_extended = dofile("../shared/table-extended.lua")
 
 local hueshiftvalue = 10
 local satshiftvalue = 10
@@ -99,7 +99,7 @@ return function(dialogtitle)
     local s7 = colorshift(c, 1, mathextended:norm(hueshiftvalue, 0, 360) * 3, mathextended:norm(satshiftvalue, 0, 100) * 2, mathextended:norm(lightshiftvalue, 0, 100) * 8)
 
     function displaycolorshadesguide(dialog ,widgetstable ,visible)
-        local len = tableextended.length(widgetstable)
+        local len = table_extended.length(widgetstable)
         for i = 1, len do
             if widgetstable[i][1] ~= "newrow" then
                 dialog:modify{ id= "guide"..tostring(i), visible = visible, enabled = true }
@@ -123,7 +123,7 @@ return function(dialogtitle)
                            end
     }
     colorshadesdlg:label{id = "resize", text = "Resize ▶ ▶ ▶ "}
-    for i = 1, tableextended.length(quickguidetable) do
+    for i = 1, table_extended.length(quickguidetable) do
         if quickguidetable[i][1] == "separator" then
             colorshadesdlg:separator{ id = "guide"..tostring(i), text = quickguidetable[i][2] }
         elseif quickguidetable[i][1] == "label" then

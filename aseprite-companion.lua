@@ -1,5 +1,6 @@
 colorshadesdialog = dofile("./color-shades/color-shades.lua")
 colorgroupsdialog = dofile("./color-groups/color-groups.lua")
+alert_extended = dofile("./shared/alert-extended.lua")
 
 function init(plugin)
     plugin:newCommand {
@@ -43,12 +44,10 @@ function init(plugin)
             if not app.isUIAvailable then
                 return
             end
-            if not app.activeSprite then
-                app.alert { title = "Color Groups",
-                            text = { "-- Tool unavailable --",
-                                     "There is no Sprite being worked on.",
-                                     "Please open a Sprite." },
-                            buttons = alertextended.randomconfirmtext()
+            if not app.sprite then
+                alert_extended.alert_error{
+                    "There is no Sprite being worked on.",
+                    "Please open a Sprite."
                 }
                 return
             end

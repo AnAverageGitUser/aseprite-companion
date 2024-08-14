@@ -1,12 +1,19 @@
-local alertextended = {}
+local alert_extended = {}
 
-function alertextended.randomconfirmtext()
-    local txt = { "Okay!", "Ok!", "Alright!", "Sure!", "Got it!", "Absolutely!",
-                  "Of course!", "All good!", "Okie dokie!", "Hoy!", "Zug Zug!", "Mamma mia!", "Hey, listen!", "Objection!"}
-    local index = 0
-    math.randomseed(os.time())
-    index = math.random(#txt)
-    return txt[index]
+function alert_extended.alert_error(text)
+    app.alert {
+        title = "Aseprite Companion: Error",
+        text = text,
+        buttons = "Close"
+    }
 end
 
-return alertextended
+function alert_extended.alert_info(text)
+    app.alert {
+        title = "Aseprite Companion: Info",
+        text = text,
+        buttons = "Close"
+    }
+end
+
+return alert_extended

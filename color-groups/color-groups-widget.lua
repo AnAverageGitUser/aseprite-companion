@@ -1,31 +1,27 @@
-return function(dialog, nb, colorgroups, pal)
-    local actPal = pal
-
-    function getshadecolortable(tbl)
-        local shadetbl = {}
-        for i = 2, #tbl do
-            table.insert(shadetbl, indexToColor(tbl[i]))
+return function(dialog, num_color_groups_per_page, color_groups)
+    function get_shade_color_table(tbl)
+        local shade_table = {}
+        for i = 1, #tbl do
+            table.insert(shade_table, index_to_color(tbl[i]))
         end
-        return shadetbl
+        return shade_table
     end
 
-    function indexToColor(index)
-        local ncolors = #actPal
-        local c = nil
-        if index < ncolors then
-            c = actPal:getColor(index)
+    function index_to_color(index)
+        local palette = app.sprite.palettes[1]
+        if index < #palette then
+            return palette:getColor(index)
         else
-            c = actPal:getColor(0)
+            return palette:getColor(0)
         end
-        return c
     end
 
-    for i = 1, nb do
+    for i = 1, num_color_groups_per_page do
         dialog:shades {
             id = "Shade" .. tostring(i),
-            label = colorgroups[i][1],
+            label = color_groups[i].name,
             mode = "pick",
-            colors = getshadecolortable(colorgroups[i]),
+            colors = get_shade_color_table(color_groups[i].colors),
             onclick = function(ev)
                 if ev.button == MouseButton.LEFT then
                     app.fgColor = ev.color
