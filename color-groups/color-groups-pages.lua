@@ -15,8 +15,8 @@ return function(dialog, num_color_groups_per_page, color_groups, active_page, fn
 
     -- update separator label
     dialog:modify {
-        id = "groupsseparator",
-        text = "Groups - Page " .. active_page
+        id = "nav-pos",
+        text = "" .. active_page
     }
 
     -- update actual color groups
@@ -47,7 +47,7 @@ return function(dialog, num_color_groups_per_page, color_groups, active_page, fn
     local options = fn_gen_dropdown_options(color_groups)
         previous_options = options_as_json
         dialog:modify{
-            id = "groupsdropdown",
+            id = "edit_mode_groups_dropdown",
             option = options[selected_group_index],
             options = options
         }

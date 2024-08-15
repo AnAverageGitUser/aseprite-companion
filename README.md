@@ -5,7 +5,7 @@ It provides a color groups dialog for grouping colors and naming color groups an
 of simple color shade ramps.
 
 # Installation
-TODO
+[official aseprite plugin documentation](https://www.aseprite.org/api/plugin)
 
 # Usage
 Aseprite companion's dialogs can be found in the menu `Sprite > [Aseprite Companion]`.
@@ -52,6 +52,7 @@ A big thanks to Jon Cote for their work on this aseprite extension / plugin.
   - The file name field is not cleared anymore upon loading of a color group file.
   - The group name field is not cleared anymore upon color group renaming.
   - Moved the dialogs from the `Sprite` menu into their own `Sprite > [Aseprite Companion]` sub menu.
+  - Reworked color groups dialog layout: tabs are now used for the top section.
 - tag v1.3.0
   - Instead of 3 color group pages (with each 10 groups) there are now 10 color group pages
     (with each 10 groups).
