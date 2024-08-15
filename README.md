@@ -18,7 +18,7 @@ The following aseprite versions have been tested successfully for compatibility 
 
 | aseprite version | tested aseprite companion version |
 |------------------|-----------------------------------|
-| 1.3.2            | 2.0.0, 1.1.1                      |
+| 1.3.2            | 2.0.0, 1.3.0, 1.1.1               |
 | 1.3-beta4        | 1.1.1, 1.1.0, 1.0.0               |
 
 If you have another version, this extension might still work, you'll have to try it yourself.
@@ -41,7 +41,7 @@ A big thanks to Jon Cote for their work on this aseprite extension / plugin.
     - switch between pencil mode (single color selection) and shading mode
     - swap palette of selected layer
   - search for color groups by labels
-- branch master
+- branch master (next tag 2.0.0)
   - Breaking Change: the save file format changed from ".lua" to ".json", old save files will have to be recreated from scratch.
   - Breaking Change: the color groups now use the RGBA color values instead of the palette indices, this makes color group usage more portable between sprites and makes palette syncing unnecessary.
   - Better performance: performance is not (significantly) impaired by the number of color groups anymore.
