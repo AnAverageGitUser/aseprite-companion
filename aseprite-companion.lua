@@ -31,6 +31,7 @@ function init(plugin)
             end
             color_groups_is_open = true
             local groupsdialog = colorgroupsdialog(
+                    plugin,
                     "Color Groups",
                     function()
                         color_groups_is_open = false

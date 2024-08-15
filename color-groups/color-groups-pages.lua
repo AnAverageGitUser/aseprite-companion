@@ -1,6 +1,4 @@
-local previous_options = ""
-
-return function(dialog, num_color_groups_per_page, color_groups, active_page, fn_gen_dropdown_options, selected_group_index)
+return function(dialog, num_color_groups_per_page, color_groups, active_page)
     function get_shade_color_table(tbl)
         local shade_table = {}
         for i = 1, #tbl do
@@ -42,15 +40,6 @@ return function(dialog, num_color_groups_per_page, color_groups, active_page, fn
         end
         widget_index = widget_index + 1
     end
-
-    -- update group selection dropdown
-    local options = fn_gen_dropdown_options(color_groups)
-        previous_options = options_as_json
-        dialog:modify{
-            id = "edit_mode_groups_dropdown",
-            option = options[selected_group_index],
-            options = options
-        }
 
     return dialog
 end

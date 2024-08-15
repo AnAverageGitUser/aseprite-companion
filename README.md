@@ -40,7 +40,6 @@ A big thanks to Jon Cote for their work on this aseprite extension / plugin.
   - button for color group in shading tool (automatically adds color group to palette and selects shading tool with selection)
     - switch between pencil mode (single color selection) and shading mode
     - swap palette of selected layer
-  - add labels to color groups
   - search for color groups by labels
 - branch master
   - Breaking Change: the save file format changed from ".lua" to ".json", old save files will have to be recreated from scratch.
@@ -56,6 +55,13 @@ A big thanks to Jon Cote for their work on this aseprite extension / plugin.
   - Limited concurrently open color groups dialogs to one.
   - Color group dialogs can now be opened and used without an active sprite.
     However, adding colors requires an active palette/sprite.
+  - Saving and loading plugin preferences for the color groups dialog.
+    Whenever the dialog is opened it loads previous color groups and the name of the last saved/loaded file and prefills
+    that data.
+    - Added "Reset All Loaded Color Groups" button for a clean start.
+      If this is not sufficient delete the `<aseprite>/extensions/aseprite-companion/__pref.lua` file to get a clean slate.
+  - Added a label tab in which labels can be removed and added to and from color groups.
+  - Completely changed color group selection as the aseprite plugin API was giving me a hard time with dropdown menus.
 - tag v1.3.0
   - Instead of 3 color group pages (with each 10 groups) there are now 10 color group pages
     (with each 10 groups).
