@@ -3,10 +3,56 @@ colorgroupsdialog = dofile("./color-groups/color-groups.lua")
 alert_extended = dofile("./shared/alert-extended.lua")
 
 function init(plugin)
+    plugin:newMenuSeparator{
+        group="sprite_crop"
+    }
+
+    plugin:newMenuGroup{
+        id="aseprite_companion_group",
+        title="[Aseprite Companion]",
+        group="sprite_crop"
+    }
+
+    plugin:newCommand {
+        id = "color_groups",
+        title = "Color Groups",
+        group = "aseprite_companion_group",
+        onclick = function()
+            -- Check is UI available
+            if not app.isUIAvailable then
+                return
+            end
+            if not app.sprite then
+                alert_extended.alert_error{
+                    "There is no Sprite being worked on.",
+                    "Please open a Sprite."
+                }
+                return
+            end
+            local groupsdialog = colorgroupsdialog("Color Groups")
+            groupsdialog:show { wait = false }
+        end
+    }
+
+    plugin:newCommand {
+        id = "color_shades",
+        title = "Color Shades",
+        group = "aseprite_companion_group",
+        onclick = function()
+            -- Check is UI available
+            if not app.isUIAvailable then
+                return
+            end
+
+            local shadesdialog = colorshadesdialog("Color Shades")
+            shadesdialog:show { wait = false }
+        end
+    }
+
     plugin:newCommand {
         id = "aseprite-companion",
-        title = "[Aseprite Companion]",
-        group = "sprite_crop",
+        title = "About Aseprite Companion",
+        group = "aseprite_companion_group",
         onclick = function()
             -- Check is UI available
             if not app.isUIAvailable then
@@ -25,42 +71,6 @@ function init(plugin)
                 },
                 buttons="Close"
             }
-        end
-    }
-
-    plugin:newCommand {
-        id = "color-shades",
-        title = "Color Shades",
-        group = "sprite_crop",
-        onclick = function()
-            -- Check is UI available
-            if not app.isUIAvailable then
-                return
-            end
-
-            local shadesdialog = colorshadesdialog("Color Shades")
-            shadesdialog:show { wait = false }
-        end
-    }
-
-    plugin:newCommand {
-        id = "color-groups",
-        title = "Color Groups",
-        group = "sprite_crop",
-        onclick = function()
-            -- Check is UI available
-            if not app.isUIAvailable then
-                return
-            end
-            if not app.sprite then
-                alert_extended.alert_error{
-                    "There is no Sprite being worked on.",
-                    "Please open a Sprite."
-                }
-                return
-            end
-            local groupsdialog = colorgroupsdialog("Color Groups")
-            groupsdialog:show { wait = false }
         end
     }
 end

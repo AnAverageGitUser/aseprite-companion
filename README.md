@@ -8,7 +8,10 @@ of simple color shade ramps.
 TODO
 
 # Usage
-TODO
+Aseprite companion's dialogs can be found in the menu `Sprite > [Aseprite Companion]`.
+
+I recommend assigning a shortcut to the color groups dialog, e.g. `CTRL + G`.
+This can be done over the menu `Edit > Keyboard Shortcuts...`.
 
 # Aseprite Compatibility
 The following aseprite versions have been tested successfully for compatibility with this extension:
@@ -40,14 +43,15 @@ A big thanks to Jon Cote for their work on this aseprite extension / plugin.
   - add labels to color groups
   - search for color groups by labels
 - branch master
-  - Breaking Change: the save file format changed from ".lua" to ".json", old save files will have to be recreated from scratch
-  - Breaking Change: the color groups now use the RGBA color values instead of the palette indices, this makes color group usage more portable between sprites and makes palette syncing unnecessary
-  - Better performance: performance is not (significantly) impaired by the number of color groups anymore
-  - Increased number of color groups to 300
-  - Color group page navigation
-  - Selection of active color group: the dropdown now only lists the visible color groups
-  - The file name field is not cleared anymore upon loading of a color group file
-  - The group name field is not cleared anymore upon color group renaming
+  - Breaking Change: the save file format changed from ".lua" to ".json", old save files will have to be recreated from scratch.
+  - Breaking Change: the color groups now use the RGBA color values instead of the palette indices, this makes color group usage more portable between sprites and makes palette syncing unnecessary.
+  - Better performance: performance is not (significantly) impaired by the number of color groups anymore.
+  - Increased number of color groups to 300.
+  - Changed color group page navigation to accommodate more color groups.
+  - Selection of active color group: the dropdown now only lists the visible color groups.
+  - The file name field is not cleared anymore upon loading of a color group file.
+  - The group name field is not cleared anymore upon color group renaming.
+  - Moved the dialogs from the `Sprite` menu into their own `Sprite > [Aseprite Companion]` sub menu.
 - tag v1.3.0
   - Instead of 3 color group pages (with each 10 groups) there are now 10 color group pages
     (with each 10 groups).
@@ -58,10 +62,10 @@ A big thanks to Jon Cote for their work on this aseprite extension / plugin.
   - The button "previous" on the first color group page and "next" on the last color group page now wrap around
     instead of staying on the same group page.
 - tag v1.2.0
-  - Added: Previously left/right clicking a color in a color group both set the foreground color. Now a left click sets
+  - Previously left/right clicking a color in a color group both set the foreground color. Now a left click sets
     the foreground color and a right click sets the background color.
 - tag v1.1.2
-  - Fixed thanks to Eldresh: Bug: In Color Groups, when adding colors, the color at the last index in a palette can't be
+  - Fixed thanks to Eldresh: In Color Groups, when adding colors, the color at the last index in a palette couldn't be
     added. Instead, the color at index 0 is added.
 - tag v1.1.1
   - Added "Add Shades to Palette" button.
