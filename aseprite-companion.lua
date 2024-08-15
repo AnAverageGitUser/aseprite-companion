@@ -12,11 +12,19 @@ function init(plugin)
             if not app.isUIAvailable then
                 return
             end
-            app.alert{title="About Aseprite Companion",
-                      text={"Aseprite Companion v1.1.1",
-                            "An extension providing additional features for Aseprite",
-                            "MIT License",
-                            "Copyright (c) 2021 Jon Cote" }, buttons="Close"}
+            app.alert{
+                title="About Aseprite Companion",
+                text={
+                    "Aseprite Companion v2.0.0",
+                    "An extension providing additional features for Aseprite",
+                    "MIT License",
+                    "Copyright (c) 2021 Jon Cote",
+                    "Copyright (c) 2024 AnAverageGitUser",
+                    "",
+                    "The source code is available at https://github.com/AnAverageGitUser/aseprite-companion",
+                },
+                buttons="Close"
+            }
         end
     }
 
@@ -57,4 +65,6 @@ function init(plugin)
     }
 end
 
-function exit(plugin) end
+function exit(plugin)
+    
+end
