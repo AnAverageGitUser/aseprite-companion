@@ -238,7 +238,7 @@ function create_dialog(dialog_title)
                 focus = false,
                 onclick = function()
                     local data = dialog.data
-                    save_color_groups(data.filename)
+                    save_color_groups(data.save_load_filename)
                 end
             }
             :button {
@@ -248,7 +248,7 @@ function create_dialog(dialog_title)
                 focus = false,
                 onclick = function()
                     local data = dialog.data
-                    load_color_groups(data.filename)
+                    load_color_groups(data.save_load_filename)
                     update_groups_view(dialog)
                 end
             }
