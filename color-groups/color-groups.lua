@@ -5,7 +5,6 @@ alert_extended = dofile("../shared/alert-extended.lua")
 
 local groups_folder_path = app.fs.userConfigPath .. "groups\\"
 
-local dialogbounds
 local fast_forward_pages = 5
 local active_page = 1
 
@@ -145,7 +144,7 @@ function update_save_load_visibility(dialog, visible)
     dialog:modify{ id="save_load_open_folder", visible=visible }
 end
 
-function create_dialog(dialog_title)
+return function(dialog_title)
     function tab_guide(dialog)
         dialog:tab{ id="tab_guide", text="Guide" }
         for i = 1, #quick_guide_text do
@@ -172,6 +171,10 @@ function create_dialog(dialog_title)
                 selected = false,
                 focus = false,
                 onclick = function()
+                    if not app.sprite then
+                        return
+                    end
+
                     local data = dialog.data
                     local group_idx = get_dropdown_table_index(data.edit_mode_groups_dropdown)
                     local selectedColors = app.range.colors
@@ -396,15 +399,5 @@ function create_dialog(dialog_title)
     tab_color_groups(dialog)
     update_groups_view(dialog)
 
-    return dialog
-end
-
-return function(dialog_title)
-    local dialog = create_dialog(dialog_title)
-
-    dialog:show {
-        wait = false,
-        bounds = dialogbounds
-    }
     return dialog
 end

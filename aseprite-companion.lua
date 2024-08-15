@@ -13,6 +13,7 @@ function init(plugin)
         group="sprite_crop"
     }
 
+    local color_groups_is_open = false
     plugin:newCommand {
         id = "color_groups",
         title = "Color Groups",
@@ -22,15 +23,20 @@ function init(plugin)
             if not app.isUIAvailable then
                 return
             end
-            if not app.sprite then
+            if color_groups_is_open then
                 alert_extended.alert_error{
-                    "There is no Sprite being worked on.",
-                    "Please open a Sprite."
+                    "Only one color groups dialog can be open at the same time."
                 }
                 return
             end
+            color_groups_is_open = true
             local groupsdialog = colorgroupsdialog("Color Groups")
-            groupsdialog:show { wait = false }
+            groupsdialog:show {
+                wait = false,
+                onclose = function()
+                    color_groups_is_open = false
+                end
+            }
         end
     }
 

@@ -53,6 +53,9 @@ A big thanks to Jon Cote for their work on this aseprite extension / plugin.
   - The group name field is not cleared anymore upon color group renaming.
   - Moved the dialogs from the `Sprite` menu into their own `Sprite > [Aseprite Companion]` sub menu.
   - Reworked color groups dialog layout: tabs are now used for the top section.
+  - Limited concurrently open color groups dialogs to one.
+  - Color group dialogs can now be opened and used without an active sprite.
+    However, adding colors requires an active palette/sprite.
 - tag v1.3.0
   - Instead of 3 color group pages (with each 10 groups) there are now 10 color group pages
     (with each 10 groups).
