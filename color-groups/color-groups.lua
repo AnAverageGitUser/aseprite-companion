@@ -144,7 +144,7 @@ function update_save_load_visibility(dialog, visible)
     dialog:modify{ id="save_load_open_folder", visible=visible }
 end
 
-return function(dialog_title)
+return function(dialog_title, fn_on_close)
     function tab_guide(dialog)
         dialog:tab{ id="tab_guide", text="Guide" }
         for i = 1, #quick_guide_text do
@@ -380,7 +380,10 @@ return function(dialog_title)
             }
     end
 
-    local dialog = Dialog(dialog_title)
+    local dialog = Dialog {
+        title = dialog_title,
+        onclose = fn_on_close,
+    }
     tab_guide(dialog)
     tab_edit_mode(dialog)
     tab_save_load(dialog)

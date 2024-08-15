@@ -30,13 +30,13 @@ function init(plugin)
                 return
             end
             color_groups_is_open = true
-            local groupsdialog = colorgroupsdialog("Color Groups")
-            groupsdialog:show {
-                wait = false,
-                onclose = function()
-                    color_groups_is_open = false
-                end
-            }
+            local groupsdialog = colorgroupsdialog(
+                    "Color Groups",
+                    function()
+                        color_groups_is_open = false
+                    end
+            )
+            groupsdialog:show { wait = false }
         end
     }
 
