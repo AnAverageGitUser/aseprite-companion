@@ -50,6 +50,20 @@ local quick_guide_text = {
     "[Prev] [Next] Cycle color groups pages.",
 }
 
+function is_default_table_in_memory()
+    if #search.get_all_labels() ~= 0 then
+        return false
+    end
+    for i = 1, #prefs.color_groups do
+        if #prefs.color_groups[i].colors ~= 0 then
+            return false
+        end
+        if prefs.color_groups[i].name ~= "Group " .. tostring(i) then
+            return false
+        end
+    end
+    return true
+end
 function save_color_groups(name)
     local path = groups_folder_path .. name .. ".json"
     if name == "" then
@@ -70,7 +84,7 @@ function save_color_groups(name)
                 "",
                 "Do you want to overwrite this file?"
             },
-            buttons = { "Yes", "No" }
+            buttons = { "Yes: Overwrite File", "No" }
         }
         if result ~= 1 then
             return
@@ -87,6 +101,22 @@ end
 function load_color_groups(name, dialog)
     local path = groups_folder_path .. name .. ".json"
     if file_extended.file_exists(path) then
+        if not is_default_table_in_memory() then
+            local result = app.alert{
+                title = "Aseprite Companion: Load file?",
+                text = {
+                    "The currently loaded color groups will be discarded and replaced by the loaded file.",
+                    "Maybe you want to save the current color groups first.",
+                    "",
+                    "Do you want to load the file and replace the current color groups?"
+                },
+                buttons = { "Yes: Load File", "No" }
+            }
+            if result ~= 1 then
+                return
+            end
+        end
+
         active_page = 1
         prefs.color_groups = table_extended.load(path)
         search.set_color_groups(prefs.color_groups)
@@ -318,9 +348,9 @@ return function(plugin, dialog_title, fn_on_close)
                     prefs.num_color_groups_per_page = prefs.num_color_groups_per_page - 1
                     dialog:modify{ id = "view_groups", text = "" .. prefs.num_color_groups_per_page }
                     active_page = 1
-                    update_selection_visibility(dialog, prefs.selection_visible)
                     update_page_widgets_visibility(dialog)
                     update_selection_page(active_page)
+                    update_selection_visibility(dialog, prefs.selection_visible)
                     update_bottom_label_view(dialog)
                     update_groups_view(dialog)
                 end
@@ -344,6 +374,7 @@ return function(plugin, dialog_title, fn_on_close)
                     active_page = 1
                     update_page_widgets_visibility(dialog)
                     update_selection_page(active_page)
+                    update_selection_visibility(dialog, prefs.selection_visible)
                     update_bottom_label_view(dialog)
                     update_groups_view(dialog)
                 end
@@ -644,10 +675,11 @@ return function(plugin, dialog_title, fn_on_close)
                     dialog:modify{ id = "search_and", text = prefs.last_search_and }
                     dialog:modify{ id = "search_or", text = prefs.last_search_or }
 
-                    selection.set_range(1, math.min(prefs.num_color_groups_per_page, search.num_results()))
-
+                    selection.set_range(1, math.min(prefs.num_color_groups_per_page, math.max(search.num_results(), 1)))
+                    update_selection_visibility(dialog, prefs.selection_visible)
                     update_bottom_label_view(dialog)
                     update_groups_view(dialog)
+                    update_navigation(dialog)
                 end
             }
             :button {
@@ -656,12 +688,18 @@ return function(plugin, dialog_title, fn_on_close)
                 visible = false,
                 onclick = function()
                     search.clear_search()
-                    selection.set_range(1, prefs.num_color_groups_per_page - 1)
+                    selection.set_range(1, prefs.num_color_groups_per_page)
+                    update_selection_visibility(dialog, prefs.selection_visible)
                     update_bottom_label_view(dialog)
                     update_groups_view(dialog)
                     update_navigation(dialog)
                 end
             }
+    end
+    function tab_tools(dialog)
+        dialog
+            :tab{ id="tab_tools", text="Tools" }
+            :button{ visible = false }
     end
     function tab_color_groups(dialog)
         dialog
@@ -720,6 +758,7 @@ return function(plugin, dialog_title, fn_on_close)
                 onclick = function()
                     active_page = 1
                     update_selection_page(active_page)
+                    update_selection_visibility(dialog, prefs.selection_visible)
                     update_groups_view(dialog)
                     update_navigation(dialog)
                     update_bottom_label_view(dialog)
@@ -735,6 +774,7 @@ return function(plugin, dialog_title, fn_on_close)
                         active_page = 1
                     end
                     update_selection_page(active_page)
+                    update_selection_visibility(dialog, prefs.selection_visible)
                     update_groups_view(dialog)
                     update_navigation(dialog)
                     update_bottom_label_view(dialog)
@@ -749,6 +789,7 @@ return function(plugin, dialog_title, fn_on_close)
                         active_page = active_page - 1
                     end
                     update_selection_page(active_page)
+                    update_selection_visibility(dialog, prefs.selection_visible)
                     update_groups_view(dialog)
                     update_navigation(dialog)
                     update_bottom_label_view(dialog)
@@ -815,9 +856,8 @@ return function(plugin, dialog_title, fn_on_close)
     tab_edit_mode(dialog)
     tab_labels(dialog)
     tab_search(dialog)
+    tab_tools(dialog)
 
-    dialog:tab{ id="tab_empty", text="Empty" }
-    dialog:button{ visible = false }
     dialog:endtabs{
         id="tab_end",
         selected="tab_edit_mode",
