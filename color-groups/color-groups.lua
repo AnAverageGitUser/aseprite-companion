@@ -5,25 +5,14 @@ color_groups_pages = dofile("./pages.lua")
 selection = dofile("./entry-selection.lua")
 search = dofile("./search.lua")
 
-local prefs = {
-    version = "2.0.0",
-    last_save_file = "",
-    last_search_and = "",
-    last_search_or = "",
-    num_color_groups_per_page = nil,
-    selection_visible = nil,
-    labels_visible = nil,
-    color_groups = nil,
-}
-local max_page_size = 20
-
+local plugin_prefs
+local last_page
+local current_label_dropdown_data = {}
 local groups_folder_path = app.fs.userConfigPath .. "groups\\"
-
 local fast_forward_pages = 5
 local active_page = 1
 local num_color_groups = 300
-local last_page
-
+local max_page_size = 20
 function create_color_groups(num_table_entries)
     local color_groups = {}
     for i = 1, num_table_entries do
@@ -34,6 +23,39 @@ function create_color_groups(num_table_entries)
     end
     return color_groups
 end
+local prefs = {
+    version = "2.0.0",
+    last_save_file = "",
+    last_search_and = "",
+    last_search_or = "",
+    num_color_groups_per_page = 10,
+    selection_visible = true,
+    labels_visible = true,
+    color_groups = create_color_groups(num_color_groups),
+}
+
+function get_color_group_labels_for_dropdown(index)
+    local color_group = search.get_color_group(index)
+
+    while #current_label_dropdown_data ~= 0 do
+        table.remove(current_label_dropdown_data, #current_label_dropdown_data)
+    end
+
+    if #color_group.labels == 0 then
+        table.insert(current_label_dropdown_data, "[ NO LABEL ]")
+    end
+
+    local tbl = {}
+    for j = 1, #color_group.labels do
+        local val = color_group.labels[j]
+        if val ~= nil then
+            table.insert(tbl, val)
+        end
+    end
+
+    return tbl
+end
+
 
 local quick_guide_text = {
     "--- Mode ---",
@@ -63,6 +85,16 @@ function is_default_table_in_memory()
         end
     end
     return true
+end
+function save_prefs()
+    plugin_prefs.version = prefs.version
+    plugin_prefs.last_save_file = prefs.last_save_file
+    plugin_prefs.last_search_and = prefs.last_search_and
+    plugin_prefs.last_search_or = prefs.last_search_or
+    plugin_prefs.num_color_groups_per_page = prefs.num_color_groups_per_page
+    plugin_prefs.selection_visible = prefs.selection_visible
+    plugin_prefs.labels_visible = prefs.labels_visible
+    plugin_prefs.color_groups = json.encode(prefs.color_groups)
 end
 function save_color_groups(name)
     local path = groups_folder_path .. name .. ".json"
@@ -133,30 +165,26 @@ function load_color_groups(name, dialog)
         }
     end
 end
-function prepare_preferences(plugin)
-    if plugin.preferences.color_group_dialog == nil then
-        plugin.preferences.color_group_dialog = prefs
-    elseif plugin.preferences.color_group_dialog.version ~= prefs.version then
-        plugin.preferences.color_group_dialog = prefs
+function prepare_preferences(plugin_p)
+    if plugin_p.preferences.color_group_dialog == nil
+        or plugin_p.preferences.color_group_dialog.version == nil
+        or plugin_p.preferences.color_group_dialog.version ~= prefs.version
+    then
+        plugin_p.preferences.color_group_dialog = {}
+        plugin_prefs = plugin_p.preferences.color_group_dialog
+        save_prefs()
     else
-        prefs = plugin.preferences.color_group_dialog
+        plugin_prefs = plugin_p.preferences.color_group_dialog
     end
 
-    if prefs.color_groups == nil then
-        prefs.color_groups = create_color_groups(num_color_groups)
-    end
-
-    if prefs.num_color_groups_per_page == nil then
-        prefs.num_color_groups_per_page = 10
-    end
-
-    if prefs.selection_visible == nil then
-        prefs.selection_visible = true
-    end
-
-    if prefs.labels_visible == nil then
-        prefs.labels_visible = true
-    end
+    prefs.version = plugin_prefs.version
+    prefs.last_save_file = plugin_prefs.last_save_file
+    prefs.last_search_and = plugin_prefs.last_search_and
+    prefs.last_search_or = plugin_prefs.last_search_or
+    prefs.num_color_groups_per_page = plugin_prefs.num_color_groups_per_page
+    prefs.selection_visible = plugin_prefs.selection_visible
+    prefs.labels_visible = plugin_prefs.labels_visible
+    prefs.color_groups = json.decode(plugin_prefs.color_groups)
 
     last_page = math.tointeger((num_color_groups + prefs.num_color_groups_per_page - 1) / prefs.num_color_groups_per_page)
     selection.set_range(1, prefs.num_color_groups_per_page)
@@ -250,7 +278,9 @@ function update_bottom_label_view(dialog)
         local idx = selection.range_min - 1 + i
         local color_group = search.get_color_group(idx)
         for j = 1, #color_group.labels do
-            labels = labels .. color_group.labels[j] .. " "
+            if color_group.labels[j] ~= nil then
+                labels = labels .. color_group.labels[j] .. " "
+            end
         end
 
         dialog:modify{
@@ -346,6 +376,7 @@ return function(plugin, dialog_title, fn_on_close)
                         return
                     end
                     prefs.num_color_groups_per_page = prefs.num_color_groups_per_page - 1
+                    save_prefs()
                     dialog:modify{ id = "view_groups", text = "" .. prefs.num_color_groups_per_page }
                     active_page = 1
                     update_page_widgets_visibility(dialog)
@@ -370,6 +401,7 @@ return function(plugin, dialog_title, fn_on_close)
                         return
                     end
                     prefs.num_color_groups_per_page = prefs.num_color_groups_per_page + 1
+                    save_prefs()
                     dialog:modify{ id = "view_groups", text = "" .. prefs.num_color_groups_per_page }
                     active_page = 1
                     update_page_widgets_visibility(dialog)
@@ -386,6 +418,7 @@ return function(plugin, dialog_title, fn_on_close)
                 visible = false,
                 onclick = function()
                     prefs.selection_visible = not prefs.selection_visible
+                    save_prefs()
 
                     dialog:modify{ id = "sel-prev", visible = prefs.selection_visible }
                     dialog:modify{ id = "sel-next", visible = prefs.selection_visible }
@@ -401,6 +434,7 @@ return function(plugin, dialog_title, fn_on_close)
                 visible = false,
                 onclick = function()
                     prefs.labels_visible = not prefs.labels_visible
+                    save_prefs()
                     update_bottom_label_view(dialog)
                 end
             }
@@ -422,6 +456,8 @@ return function(plugin, dialog_title, fn_on_close)
                 onclick = function()
                     local file = dialog.data.save_load_filename
                     prefs.last_save_file = file
+                    save_prefs()
+
                     save_color_groups(file)
                 end
             }
@@ -433,7 +469,14 @@ return function(plugin, dialog_title, fn_on_close)
                 onclick = function()
                     local file = dialog.data.save_load_filename
                     prefs.last_save_file = file
+                    save_prefs()
+
                     load_color_groups(file, dialog)
+
+                    dialog:modify{
+                        id = "label_labels_dropdown",
+                        options = get_color_group_labels_for_dropdown(selection.index())
+                    }
                 end
             }
             :button {
@@ -483,7 +526,7 @@ return function(plugin, dialog_title, fn_on_close)
             onclick = function()
             end
         }
-                :button {
+        :button {
             id = "edit_mode_rename",
             text = "Rename Group",
             selected = false,
@@ -497,12 +540,13 @@ return function(plugin, dialog_title, fn_on_close)
                     local group_idx = selection.index()
                     local color_group = search.get_color_group(group_idx)
                     color_group.name = edit_mode_group_name
+                    save_prefs()
                 end
                 update_groups_view(dialog)
             end
         }
-                :newrow()
-                :button {
+        :newrow()
+        :button {
             id = "edit_mode_add_colors",
             text = "Add Colors",
             onclick = function()
@@ -523,10 +567,11 @@ return function(plugin, dialog_title, fn_on_close)
                         a = color.alpha,
                     })
                 end
+                save_prefs()
                 update_groups_view(dialog)
             end
         }
-                :button {
+        :button {
             id = "edit_mode_clear_colors",
             text = "Clear Colors",
             onclick = function()
@@ -536,6 +581,7 @@ return function(plugin, dialog_title, fn_on_close)
                 local group_idx = selection.index()
                 local color_group = search.get_color_group(group_idx)
                 color_group.colors = {}
+                save_prefs()
                 update_groups_view(dialog)
             end
         }
@@ -571,17 +617,20 @@ return function(plugin, dialog_title, fn_on_close)
                     local color_group = search.get_color_group(group_idx)
                     for i=1, #color_group.labels do
                         if color_group.labels[i] == label then
-                            return -- no duplicates
+                            goto skip_insertion -- no duplicates
                         end
                     end
                     table.insert(color_group.labels, label)
+                    save_prefs()
+                    ::skip_insertion::
                     dialog:modify{
                         id = "label_labels_dropdown",
                         option = label,
-                        options = color_group.labels
+                        options = get_color_group_labels_for_dropdown(selection.index())
                     }
                     dialog:modify{
                         id = "label_labels",
+                        option = label,
                         options = search.get_all_labels()
                     }
                     update_bottom_label_view(dialog)
@@ -591,7 +640,6 @@ return function(plugin, dialog_title, fn_on_close)
                 id = "label_labels_dropdown",
                 label = "Remove Label",
                 visible = false,
-                option = nil,
                 options = prefs.color_groups[1].labels
             }
             :button {
@@ -611,16 +659,17 @@ return function(plugin, dialog_title, fn_on_close)
                     for i=1, #color_group.labels do
                         if color_group.labels[i] == label then
                             table.remove(color_group.labels, i)
+                            save_prefs()
                             break -- assume labels are not duplicate
                         end
                     end
                     dialog:modify{
                         id = "label_labels_dropdown",
-                        options = color_group.labels
+                        options = get_color_group_labels_for_dropdown(selection.index())
                     }
                     dialog:modify{
                         id = "label_labels",
-                        options = search.get_all_labels()
+                        options = search.get_all_labels(),
                     }
                     update_bottom_label_view(dialog)
                 end
@@ -716,12 +765,7 @@ return function(plugin, dialog_title, fn_on_close)
                     selection.previous()
                     update_selection_visibility(dialog, true)
 
-                    local group_idx = selection.index()
-                    local color_group = search.get_color_group(group_idx)
-                    dialog:modify{
-                        id = "label_labels_dropdown",
-                        options = color_group.labels
-                    }
+                    dialog:modify{ id = "label_labels_dropdown", options = get_color_group_labels_for_dropdown(selection.index()) }
                 end
             }
             :button {
@@ -736,12 +780,7 @@ return function(plugin, dialog_title, fn_on_close)
                     selection.next()
                     update_selection_visibility(dialog, true)
 
-                    local group_idx = selection.index()
-                    local color_group = search.get_color_group(group_idx)
-                    dialog:modify{
-                        id = "label_labels_dropdown",
-                        options = color_group.labels
-                    }
+                    dialog:modify{ id = "label_labels_dropdown", options = get_color_group_labels_for_dropdown(selection.index()) }
                 end
             }
 
@@ -762,6 +801,7 @@ return function(plugin, dialog_title, fn_on_close)
                     update_groups_view(dialog)
                     update_navigation(dialog)
                     update_bottom_label_view(dialog)
+                    dialog:modify{ id = "label_labels_dropdown", options = get_color_group_labels_for_dropdown(selection.index()) }
                 end
             }
             :button {
@@ -778,6 +818,7 @@ return function(plugin, dialog_title, fn_on_close)
                     update_groups_view(dialog)
                     update_navigation(dialog)
                     update_bottom_label_view(dialog)
+                    dialog:modify{ id = "label_labels_dropdown", options = get_color_group_labels_for_dropdown(selection.index()) }
                 end
             }
             :button {
@@ -793,6 +834,7 @@ return function(plugin, dialog_title, fn_on_close)
                     update_groups_view(dialog)
                     update_navigation(dialog)
                     update_bottom_label_view(dialog)
+                    dialog:modify{ id = "label_labels_dropdown", options = get_color_group_labels_for_dropdown(selection.index()) }
                 end
             }
             :button {
@@ -813,6 +855,7 @@ return function(plugin, dialog_title, fn_on_close)
                     update_groups_view(dialog)
                     update_navigation(dialog)
                     update_bottom_label_view(dialog)
+                    dialog:modify{ id = "label_labels_dropdown", options = get_color_group_labels_for_dropdown(selection.index()) }
                 end
             }
             :button {
@@ -828,6 +871,7 @@ return function(plugin, dialog_title, fn_on_close)
                     update_groups_view(dialog)
                     update_navigation(dialog)
                     update_bottom_label_view(dialog)
+                    dialog:modify{ id = "label_labels_dropdown", options = get_color_group_labels_for_dropdown(selection.index()) }
                 end
             }
             :button {
@@ -840,6 +884,7 @@ return function(plugin, dialog_title, fn_on_close)
                     update_groups_view(dialog)
                     update_navigation(dialog)
                     update_bottom_label_view(dialog)
+                    dialog:modify{ id = "label_labels_dropdown", options = get_color_group_labels_for_dropdown(selection.index()) }
                 end
             }
     end
@@ -872,6 +917,9 @@ return function(plugin, dialog_title, fn_on_close)
 
             if ev.tab == "tab_label" then
                 dialog:modify{ id = "label_labels", options = search.get_all_labels() }
+                if not search.empty() then
+                    dialog:modify{ id = "label_labels_dropdown", options = get_color_group_labels_for_dropdown(selection.index()) }
+                end
             end
 
             if ev.tab == "tab_search" then
