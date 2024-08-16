@@ -1,4 +1,4 @@
-return function(dialog, num_color_groups_per_page, color_groups, active_page)
+return function(dialog, num_color_groups_per_page, color_group_search, active_page)
     function get_shade_color_table(tbl)
         local shade_table = {}
         for i = 1, #tbl do
@@ -20,8 +20,8 @@ return function(dialog, num_color_groups_per_page, color_groups, active_page)
     -- update actual color groups
     local widget_index = 1
     for i = page_start_index, page_end_index do
-        if i <= #color_groups then
-            local color_group = color_groups[i]
+        if i <= color_group_search.num_results() then
+            local color_group = color_group_search.get_color_group(i)
             dialog:modify{
                 id = "Shade"..tostring(widget_index),
                 label = color_group.name,
@@ -32,10 +32,10 @@ return function(dialog, num_color_groups_per_page, color_groups, active_page)
         else
             dialog:modify{
                 id = "Shade"..tostring(widget_index),
-                visible = true,
-                label = "None",
+                label = nil,
                 colors = {},
-                enabled = false
+                visible = false,
+                enabled = false,
             }
         end
         widget_index = widget_index + 1
