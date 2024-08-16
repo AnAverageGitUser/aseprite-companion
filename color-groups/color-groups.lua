@@ -1,9 +1,9 @@
 table_extended = dofile("../shared/table-extended.lua")
 file_extended = dofile("../shared/file-extended.lua")
-color_groups_pages = dofile("./color-groups-pages.lua")
 alert_extended = dofile("../shared/alert-extended.lua")
-selection = dofile("../color-groups/color-groups-entry-selection.lua")
-search = dofile("../color-groups/color-groups-search.lua")
+color_groups_pages = dofile("./pages.lua")
+selection = dofile("./entry-selection.lua")
+search = dofile("./search.lua")
 
 local prefs = {
     version = "2.0.0",
@@ -91,6 +91,7 @@ function load_color_groups(name, dialog)
         prefs.color_groups = table_extended.load(path)
         search.set_color_groups(prefs.color_groups)
         search.clear_search()
+        selection.set_range(1, prefs.num_color_groups_per_page)
         update_bottom_label_view(dialog)
         update_groups_view(dialog)
     else
@@ -136,13 +137,7 @@ end
 function update_groups_view(dialog)
     last_page = math.tointeger((search.num_results() + prefs.num_color_groups_per_page - 1) / prefs.num_color_groups_per_page)
 
-    local nav_enabled = last_page > 1
-    dialog:modify { id = "nav-first", enabled = nav_enabled }
-    dialog:modify { id = "nav-prev-fast", enabled = nav_enabled }
-    dialog:modify { id = "nav-prev", enabled = nav_enabled }
-    dialog:modify { id = "nav-next", enabled = nav_enabled }
-    dialog:modify { id = "nav-next-fast", enabled = nav_enabled }
-    dialog:modify { id = "nav-last", enabled = nav_enabled }
+    update_navigation(dialog)
 
     local selection_enabled = not search.empty()
     dialog:modify { id = "sel-prev", enabled = selection_enabled }
@@ -191,6 +186,7 @@ function update_search_visibility(dialog, visible)
     dialog:modify{ id="search_clear", visible=visible }
     dialog:modify{ id="search_term", visible=visible }
 end
+
 function update_selection_visibility(dialog, visible)
     for i = 1, max_page_size do
         dialog
@@ -212,10 +208,10 @@ function update_selection_page(active_page_num)
 end
 
 function update_bottom_label_view(dialog)
+    for i=1, max_page_size do
+        dialog:modify{ id = "ShadeSeparatorLabels" .. tostring(i), visible = false }
+    end
     if search.empty() then
-        for i=1, max_page_size do
-            dialog:modify{ id = "ShadeSeparatorLabels" .. tostring(i), visible = false }
-        end
         return
     end
 
@@ -231,13 +227,6 @@ function update_bottom_label_view(dialog)
             id = "ShadeSeparatorLabels" .. tostring(i),
             visible = prefs.labels_visible,
             text = labels,
-        }
-    end
-    for i=math.max(search.num_results() - selection.range_min + 2, 1), max_page_size do
-        -- hide superfluous labels
-        dialog:modify{
-            id = "ShadeSeparatorLabels" .. tostring(i),
-            visible = false,
         }
     end
 end
@@ -257,14 +246,17 @@ function add_color_group_row(dialog, index)
         return shade_table
     end
 
+    local visible_index = index <= prefs.num_color_groups_per_page
+    local visible_label = visible_index and prefs.labels_visible
+    local visible_selector = visible_index and prefs.selection_visible and index - 1 == selection.offset()
     local color_group = search.get_color_group(index)
     dialog
-        :label { id = "ShadeSeparatorTop" .. tostring(index), label = " ▼▼▼ ", text = " ▼▼▼ Selected ▼▼▼", visible = false }
-        :label { id = "ShadeSeparatorLabels" .. tostring(index), label = "Labels", visible = false }
+        :label { id = "ShadeSeparatorTop" .. tostring(index), label = " ▼▼▼ ", text = " ▼▼▼ Selected ▼▼▼", visible = visible_selector }
+        :label { id = "ShadeSeparatorLabels" .. tostring(index), label = "Labels", visible = visible_label }
         :shades {
             id = "Shade" .. tostring(index),
             label = color_group.name,
-            visible = index <= prefs.num_color_groups_per_page,
+            visible = visible_index,
             mode = "pick",
             colors = get_shade_color_table(color_group.colors),
             onclick = function(ev)
@@ -275,24 +267,31 @@ function add_color_group_row(dialog, index)
                 end
             end
         }
-        :label { id = "ShadeSeparatorBottom" .. tostring(index), label = " ▲▲▲ ", text = " ▲▲▲ Selected ▲▲▲", visible = false }
+        :label { id = "ShadeSeparatorBottom" .. tostring(index), label = " ▲▲▲ ", text = " ▲▲▲ Selected ▲▲▲", visible = visible_selector }
 end
 function update_navigation(dialog)
-    if active_page <= 1 then
-        dialog:modify{ id = "nav-first", enabled = false }
-        dialog:modify{ id = "nav-prev-fast", enabled = false }
-        dialog:modify{ id = "nav-prev", enabled = false }
-        dialog:modify{ id = "nav-next", enabled = true }
-        dialog:modify{ id = "nav-next-fast", enabled = true }
-        dialog:modify{ id = "nav-last", enabled = true }
-    elseif active_page > last_page then
-        dialog:modify{ id = "nav-first", enabled = true }
-        dialog:modify{ id = "nav-fast-prev", enabled = true }
-        dialog:modify{ id = "nav-prev", enabled = true }
-        dialog:modify{ id = "nav-next", enabled = false }
-        dialog:modify{ id = "nav-fast-next", enabled = false }
-        dialog:modify{ id = "nav-last", enabled = false }
+    local enable_prev, enable_next
+    if last_page == 1 then
+        enable_prev = false
+        enable_next = false
+    elseif active_page <= 1 then
+        enable_prev = false
+        enable_next = true
+    elseif active_page >= last_page then
+        enable_prev = true
+        enable_next = false
+    else
+        enable_prev = true
+        enable_next = true
     end
+
+    dialog:modify{ id = "nav-first", enabled = enable_prev }
+    dialog:modify{ id = "nav-prev-fast", enabled = enable_prev }
+    dialog:modify{ id = "nav-prev", enabled = enable_prev }
+
+    dialog:modify{ id = "nav-next", enabled = enable_next }
+    dialog:modify{ id = "nav-next-fast", enabled = enable_next }
+    dialog:modify{ id = "nav-last", enabled = enable_next }
 end
 
 return function(plugin, dialog_title, fn_on_close)
@@ -376,72 +375,6 @@ return function(plugin, dialog_title, fn_on_close)
             }
             :newrow()
     end
-    function tab_edit_mode(dialog)
-        dialog
-            :tab{ id="tab_edit_mode", text="Edit Groups" }
-            :entry {
-                id = "edit_mode_group_name",
-                label = "Group Name",
-                onclick = function()
-                end
-            }
-            :button {
-                id = "edit_mode_rename",
-                text = "Rename Group",
-                selected = false,
-                focus = false,
-                onclick = function()
-                    if search.empty() then
-                        return
-                    end
-                    local edit_mode_group_name = dialog.data.edit_mode_group_name
-                    if edit_mode_group_name ~= "" then
-                        local group_idx = selection.index()
-                        local color_group = search.get_color_group(group_idx)
-                        color_group.name = edit_mode_group_name
-                    end
-                    update_groups_view(dialog)
-                end
-            }
-            :newrow()
-            :button {
-                id = "edit_mode_add_colors",
-                text = "Add Colors",
-                onclick = function()
-                    if not app.sprite or search.empty() then
-                        return
-                    end
-
-                    local group_idx = selection.index()
-                    local color_group = search.get_color_group(group_idx)
-                    local selectedColors = app.range.colors
-                    local palette = app.sprite.palettes[1]
-                    for j = 1, #selectedColors do
-                        local color = palette:getColor(selectedColors[j])
-                        table.insert(color_group.colors, {
-                            r = color.red,
-                            g = color.green,
-                            b = color.blue,
-                            a = color.alpha,
-                        })
-                    end
-                    update_groups_view(dialog)
-                end
-            }
-            :button {
-                id = "edit_mode_clear_colors",
-                text = "Clear Colors",
-                onclick = function()
-                    if search.empty() then
-                        return
-                    end
-                    local group_idx = selection.index()
-                    local color_group = search.get_color_group(group_idx)
-                    color_group.colors = {}
-                    update_groups_view(dialog)
-                end
-            }
-    end
     function tab_save_load(dialog)
         dialog
             :tab{ id="tab_save_load", text="Save/Load" }
@@ -504,10 +437,77 @@ return function(plugin, dialog_title, fn_on_close)
                     prefs.color_groups = create_color_groups(num_color_groups)
                     search.set_color_groups(prefs.color_groups)
                     search.clear_search()
+                    selection.set_range(1, prefs.num_color_groups_per_page)
                     update_bottom_label_view(dialog)
                     update_groups_view(dialog)
                 end
             }
+    end
+    function tab_edit_mode(dialog)
+        dialog
+                :tab{ id="tab_edit_mode", text="Edit Groups" }
+                :entry {
+            id = "edit_mode_group_name",
+            label = "Group Name",
+            onclick = function()
+            end
+        }
+                :button {
+            id = "edit_mode_rename",
+            text = "Rename Group",
+            selected = false,
+            focus = false,
+            onclick = function()
+                if search.empty() then
+                    return
+                end
+                local edit_mode_group_name = dialog.data.edit_mode_group_name
+                if edit_mode_group_name ~= "" then
+                    local group_idx = selection.index()
+                    local color_group = search.get_color_group(group_idx)
+                    color_group.name = edit_mode_group_name
+                end
+                update_groups_view(dialog)
+            end
+        }
+                :newrow()
+                :button {
+            id = "edit_mode_add_colors",
+            text = "Add Colors",
+            onclick = function()
+                if not app.sprite or search.empty() then
+                    return
+                end
+
+                local group_idx = selection.index()
+                local color_group = search.get_color_group(group_idx)
+                local selectedColors = app.range.colors
+                local palette = app.sprite.palettes[1]
+                for j = 1, #selectedColors do
+                    local color = palette:getColor(selectedColors[j])
+                    table.insert(color_group.colors, {
+                        r = color.red,
+                        g = color.green,
+                        b = color.blue,
+                        a = color.alpha,
+                    })
+                end
+                update_groups_view(dialog)
+            end
+        }
+                :button {
+            id = "edit_mode_clear_colors",
+            text = "Clear Colors",
+            onclick = function()
+                if search.empty() then
+                    return
+                end
+                local group_idx = selection.index()
+                local color_group = search.get_color_group(group_idx)
+                color_group.colors = {}
+                update_groups_view(dialog)
+            end
+        }
     end
     function tab_labels(dialog)
         dialog
@@ -669,6 +669,7 @@ return function(plugin, dialog_title, fn_on_close)
                 id = "sel-prev",
                 text = "▲",
                 label = "Selection",
+                visible = prefs.selection_visible,
                 onclick = function()
                     if search.empty() then
                         update_selection_visibility(dialog, false)
@@ -688,6 +689,7 @@ return function(plugin, dialog_title, fn_on_close)
             :button {
                 id = "sel-next",
                 text = "▼",
+                visible = prefs.selection_visible,
                 onclick = function()
                     if search.empty() then
                         update_selection_visibility(dialog, false)
@@ -714,8 +716,7 @@ return function(plugin, dialog_title, fn_on_close)
                 id = "nav-first",
                 text = "|<",
                 label = "Pages",
-                selected = false,
-                focus = false,
+                enabled = false,
                 onclick = function()
                     active_page = 1
                     update_selection_page(active_page)
@@ -727,8 +728,7 @@ return function(plugin, dialog_title, fn_on_close)
             :button {
                 id = "nav-prev-fast",
                 text = "<<",
-                selected = false,
-                focus = false,
+                enabled = false,
                 onclick = function()
                     active_page = active_page - fast_forward_pages
                     if active_page < 1 then
@@ -743,8 +743,7 @@ return function(plugin, dialog_title, fn_on_close)
             :button {
                 id = "nav-prev",
                 text = "<",
-                selected = false,
-                focus = false,
+                enabled = false,
                 onclick = function()
                     if active_page > 1 then
                         active_page = active_page - 1
@@ -764,8 +763,6 @@ return function(plugin, dialog_title, fn_on_close)
             :button {
                 id = "nav-next",
                 text = ">",
-                selected = false,
-                focus = false,
                 onclick = function()
                     if active_page < last_page then
                         active_page = active_page + 1
@@ -780,8 +777,6 @@ return function(plugin, dialog_title, fn_on_close)
             :button {
                 id = "nav-next-fast",
                 text = ">>",
-                selected = false,
-                focus = false,
                 onclick = function()
                     active_page = active_page + fast_forward_pages
                     if active_page > last_page then
@@ -797,8 +792,6 @@ return function(plugin, dialog_title, fn_on_close)
             :button {
                 id = "nav-last",
                 text = ">|",
-                selected = false,
-                focus = false,
                 onclick = function()
                     active_page = last_page
                     update_selection_page(active_page)
@@ -818,8 +811,8 @@ return function(plugin, dialog_title, fn_on_close)
     }
     tab_guide(dialog)
     tab_view(dialog)
-    tab_edit_mode(dialog)
     tab_save_load(dialog)
+    tab_edit_mode(dialog)
     tab_labels(dialog)
     tab_search(dialog)
 
@@ -848,9 +841,11 @@ return function(plugin, dialog_title, fn_on_close)
     }
 
     tab_color_groups(dialog)
+
     update_page_widgets_visibility(dialog)
     update_groups_view(dialog)
     update_selection_visibility(dialog, prefs.selection_visible)
+    update_bottom_label_view(dialog)
 
     return dialog
 end

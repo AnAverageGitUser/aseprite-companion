@@ -46,12 +46,4 @@ function this.next()
     this.wrap()
 end
 
-function this.is_min()
-    return this.pos == this.range_min
-end
-
-function this.is_max()
-    return this.pos == this.range_max
-end
-
 return this
