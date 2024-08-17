@@ -48,7 +48,8 @@ However, it won't be removed in case anyone prefers the simpler dialog.
   - color retriever: sort colors by hue and lightness
 - branch master (to be tag 2.1.0)
   - `Edit Groups` tab:
-    - Added tool `color retriever`: retrieve palette from all frames of the selected layers/cels/frames.
+    - Added tool `color retriever`: retrieve palette from all frames of the selected layers/cels/frames. Pixels that are fully transparent (alpha = 255) are ignored.
+      - The retrieved colors are automatically sorted: primarily by hue, and brighter colors to the right. Visual pleasing color sorting is difficult, some manual correction might still be necessary.
 - tag 2.0.0
   - `Color Groups` dialog changed:
     - General:

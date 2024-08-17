@@ -1,6 +1,7 @@
 table_extended = dofile("../shared/table-extended.lua")
 file_extended = dofile("../shared/file-extended.lua")
 alert_extended = dofile("../shared/alert-extended.lua")
+rgb_to_hsv = dofile("../shared/rgb_to_hsv.lua")
 color_groups_pages = dofile("./pages.lua")
 selection = dofile("./entry-selection.lua")
 search = dofile("./search.lua")
@@ -748,7 +749,20 @@ return function(plugin, dialog_title, fn_on_close)
                 else
                     return
                 end
-                search.get_color_group(selection.index()).colors = convert_32bit_color_array_to_table_colors(color_group_32bit)
+                local sort_these_colors = convert_32bit_color_array_to_table_colors(color_group_32bit)
+                local fn_color_ordinal = function(r, g, b)
+                    local h, s, v = rgb_to_hsv(r, g, b)
+                    -- magic formula that I tweaked by hand: keep hues together,
+                    -- put bright colors in their ramps to the right and dark colors to the left
+                    return h * 10 + (1 - s) + v
+                end
+                local fn_cmp = function(rgba1, rgba2)
+                    local ordinal1 = fn_color_ordinal(rgba1.r / 255, rgba1.g / 255, rgba1.b / 255)
+                    local ordinal2 = fn_color_ordinal(rgba2.r / 255, rgba2.g / 255, rgba2.b / 255)
+                    return ordinal1 < ordinal2
+                end
+                table.sort(sort_these_colors, fn_cmp)
+                search.get_color_group(selection.index()).colors = sort_these_colors
 
                 save_prefs()
                 update_groups_view(dialog)
