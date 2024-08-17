@@ -37,20 +37,17 @@ local prefs = {
 function get_color_group_labels_for_dropdown(index)
     local color_group = search.get_color_group(index)
 
-    while #current_label_dropdown_data ~= 0 do
-        table.remove(current_label_dropdown_data, #current_label_dropdown_data)
-    end
-
-    if #color_group.labels == 0 then
-        table.insert(current_label_dropdown_data, "[ NO LABEL ]")
-    end
-
     local tbl = {}
+
     for j = 1, #color_group.labels do
         local val = color_group.labels[j]
         if val ~= nil then
             table.insert(tbl, val)
         end
+    end
+
+    if #tbl == 0 then
+        table.insert(tbl, "[ NO LABEL ]")
     end
 
     return tbl
@@ -149,11 +146,8 @@ function load_color_groups(name, dialog)
             end
         end
 
-        active_page = 1
         prefs.color_groups = table_extended.load(path)
-        search.set_color_groups(prefs.color_groups)
-        search.clear_search()
-        selection.set_range(1, prefs.num_color_groups_per_page)
+        reset_selection(prefs.color_groups, active_page)
         update_bottom_label_view(dialog)
         update_groups_view(dialog)
     else
@@ -165,7 +159,7 @@ function load_color_groups(name, dialog)
         }
     end
 end
-function prepare_preferences(plugin_p)
+function init_globals(plugin_p)
     if plugin_p.preferences.color_group_dialog == nil
         or plugin_p.preferences.color_group_dialog.version == nil
         or plugin_p.preferences.color_group_dialog.version ~= prefs.version
@@ -187,9 +181,7 @@ function prepare_preferences(plugin_p)
     prefs.color_groups = json.decode(plugin_prefs.color_groups)
 
     last_page = math.tointeger((num_color_groups + prefs.num_color_groups_per_page - 1) / prefs.num_color_groups_per_page)
-    selection.set_range(1, prefs.num_color_groups_per_page)
-    search.set_color_groups(prefs.color_groups)
-    search.clear_search()
+    reset_selection(prefs.color_groups, active_page)
 end
 
 function update_groups_view(dialog)
@@ -258,10 +250,16 @@ function update_selection_visibility(dialog, visible)
         :modify { id = "ShadeSeparatorBottom" .. tostring(active_index), visible = visible }
 end
 
+function reset_selection(cg, active_page_num)
+    search.set_color_groups(cg)
+    search.clear_search()
+    active_page = 1
+    update_selection_page(active_page_num)
+end
 function update_selection_page(active_page_num)
     selection.set_range(
         prefs.num_color_groups_per_page * (active_page_num - 1) + 1,
-        math.min(prefs.num_color_groups_per_page * active_page_num, search.num_results())
+        math.min(prefs.num_color_groups_per_page * active_page_num, math.max(search.num_results(), 1))
     )
 end
 
@@ -507,11 +505,8 @@ return function(plugin, dialog_title, fn_on_close)
                     if result ~= 1 then
                         return
                     end
-                    active_page = 1
                     prefs.color_groups = create_color_groups(num_color_groups)
-                    search.set_color_groups(prefs.color_groups)
-                    search.clear_search()
-                    selection.set_range(1, prefs.num_color_groups_per_page)
+                    reset_selection(prefs.color_groups, active_page)
                     update_bottom_label_view(dialog)
                     update_groups_view(dialog)
                 end
@@ -656,13 +651,16 @@ return function(plugin, dialog_title, fn_on_close)
                     end
                     local group_idx = selection.index()
                     local color_group = search.get_color_group(group_idx)
+                    local new_table = {}
                     for i=1, #color_group.labels do
-                        if color_group.labels[i] == label then
-                            table.remove(color_group.labels, i)
-                            save_prefs()
-                            break -- assume labels are not duplicate
+                        if color_group.labels[i] ~= label then
+                            table.insert(new_table, label)
                         end
                     end
+                    -- if table.remove would be used, "null" values would wander into the json object, thanks lua!
+                    color_group.labels = new_table
+                    save_prefs()
+
                     dialog:modify{
                         id = "label_labels_dropdown",
                         options = get_color_group_labels_for_dropdown(selection.index())
@@ -724,7 +722,8 @@ return function(plugin, dialog_title, fn_on_close)
                     dialog:modify{ id = "search_and", text = prefs.last_search_and }
                     dialog:modify{ id = "search_or", text = prefs.last_search_or }
 
-                    selection.set_range(1, math.min(prefs.num_color_groups_per_page, math.max(search.num_results(), 1)))
+                    active_page = 1
+                    update_selection_page(active_page)
                     update_selection_visibility(dialog, prefs.selection_visible)
                     update_bottom_label_view(dialog)
                     update_groups_view(dialog)
@@ -737,7 +736,8 @@ return function(plugin, dialog_title, fn_on_close)
                 visible = false,
                 onclick = function()
                     search.clear_search()
-                    selection.set_range(1, prefs.num_color_groups_per_page)
+                    active_page = 1
+                    update_selection_page(active_page)
                     update_selection_visibility(dialog, prefs.selection_visible)
                     update_bottom_label_view(dialog)
                     update_groups_view(dialog)
@@ -889,7 +889,7 @@ return function(plugin, dialog_title, fn_on_close)
             }
     end
 
-    prepare_preferences(plugin)
+    init_globals(plugin)
 
     local dialog = Dialog {
         title = dialog_title,
