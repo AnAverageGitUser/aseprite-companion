@@ -5,7 +5,9 @@ It provides a color groups dialog for grouping colors and naming color groups an
 of simple color shade ramps.
 
 # Installation
-[official aseprite plugin documentation](https://www.aseprite.org/api/plugin)
+You can add extensions in the `.zip` file format over `Edit > Preferences... > Extensions > Add Extension`.
+
+[Official aseprite plugin documentation](https://www.aseprite.org/api/plugin).
 
 # Usage
 Aseprite companion's dialogs can be found in the menu `Sprite > [Aseprite Companion]`.
@@ -29,16 +31,18 @@ with some fixes and changes applied.
 
 The original github repository seems to not be publicly available, since this software is MIT licensed,
 I created this one instead.
-I also applied some fixes and changes to it.
 
 The older versions are marked via git tags, so if you wanted to you could use any of the older versions.
 
 A big thanks to Jon Cote for their work on this aseprite extension / plugin.
 
+Since there is [Chaonic's Palette Helper](https://chaonic.itch.io/aseprite-palette-helper)
+([github](https://github.com/ChaonicTheDeathKitten/Palette-Helper)), I will not extend the `Color Shades` dialog.
+However, it won't be removed in case anyone prefers the simpler dialog.
+
 # Changelog
-- Planned / Ideas
+- Ideas
   - shading tool optimization: check if color group is already within the palette to not needlessly grow the palette
-  - shading tool: alternate mode: set the palette to the selected color group
   - tool: swap palette of selected layer
   - tool: retrieve palette from selected layer
 - branch master (next tag 2.0.0)
