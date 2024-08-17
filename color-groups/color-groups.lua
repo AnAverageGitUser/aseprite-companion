@@ -25,6 +25,7 @@ function create_color_groups(num_table_entries)
 end
 local prefs = {
     version = "2.0.0",
+    last_opened_tab = "tab_edit_mode",
     last_save_file = "",
     last_search_and = "",
     last_search_or = "",
@@ -354,21 +355,23 @@ end
 
 return function(plugin, dialog_title, fn_on_close)
     function tab_guide(dialog)
-        dialog:tab{ id="tab_guide", text="Guide" }
+        local tab_id = "tab_guide"
+        dialog:tab{ id=tab_id, text="Guide" }
         for i = 1, #quick_guide_text do
             dialog
                 :newrow()
-                :label{ id="guide"..tostring(i), text = quick_guide_text[i], visible=false }
+                :label{ id="guide"..tostring(i), text = quick_guide_text[i], visible=prefs.last_opened_tab == tab_id }
         end
     end
     function tab_view(dialog)
+        local tab_id = "tab_view"
         dialog
-            :tab{ id="tab_view", text="View" }
+            :tab{ id=tab_id, text="View" }
             :button{
                 id = "view_groups_less",
                 label = "Groups per Page",
                 text = "<",
-                visible = false,
+                visible = prefs.last_opened_tab == tab_id,
                 onclick = function()
                     if prefs.num_color_groups_per_page <= 1 then
                         return
@@ -387,13 +390,13 @@ return function(plugin, dialog_title, fn_on_close)
             :button{
                 id = "view_groups",
                 text = "" .. prefs.num_color_groups_per_page,
-                visible = false,
+                visible = prefs.last_opened_tab == tab_id,
                 enabled = false,
             }
             :button{
                 id = "view_groups_more",
                 text = ">",
-                visible = false,
+                visible = prefs.last_opened_tab == tab_id,
                 onclick = function()
                     if prefs.num_color_groups_per_page >= max_page_size then
                         return
@@ -413,7 +416,7 @@ return function(plugin, dialog_title, fn_on_close)
                 id = "view_toggle_selector",
                 label = "Selector",
                 text = "Show / Hide",
-                visible = false,
+                visible = prefs.last_opened_tab == tab_id,
                 onclick = function()
                     prefs.selection_visible = not prefs.selection_visible
                     save_prefs()
@@ -429,7 +432,7 @@ return function(plugin, dialog_title, fn_on_close)
                 id = "view_toggle_labels",
                 label = "Labels",
                 text = "Show / Hide",
-                visible = false,
+                visible = prefs.last_opened_tab == tab_id,
                 onclick = function()
                     prefs.labels_visible = not prefs.labels_visible
                     save_prefs()
@@ -439,8 +442,9 @@ return function(plugin, dialog_title, fn_on_close)
             :newrow()
     end
     function tab_save_load(dialog)
+        local tab_id = "tab_save_load"
         dialog
-            :tab{ id="tab_save_load", text="Save/Load" }
+            :tab{ id=tab_id, text="Save/Load" }
             :entry {
                 id = 'save_load_filename',
                 label = "File Name",
@@ -449,8 +453,7 @@ return function(plugin, dialog_title, fn_on_close)
             :button {
                 id = "save_load_save",
                 text = "Save",
-                selected = false,
-                focus = false,
+                visible = prefs.last_opened_tab == tab_id,
                 onclick = function()
                     local file = dialog.data.save_load_filename
                     prefs.last_save_file = file
@@ -462,8 +465,7 @@ return function(plugin, dialog_title, fn_on_close)
             :button {
                 id = "save_load_load",
                 text = "Load",
-                selected = false,
-                focus = false,
+                visible = prefs.last_opened_tab == tab_id,
                 onclick = function()
                     local file = dialog.data.save_load_filename
                     prefs.last_save_file = file
@@ -480,8 +482,7 @@ return function(plugin, dialog_title, fn_on_close)
             :button {
                 id = "save_load_open_folder",
                 text = "Open Folder",
-                selected = false,
-                focus = false,
+                visible = prefs.last_opened_tab == tab_id,
                 onclick = function()
                     os.execute("start " .. groups_folder_path)
                 end
@@ -490,8 +491,7 @@ return function(plugin, dialog_title, fn_on_close)
             :button {
                 id = "save_load_reset_all_groups",
                 text = "Reset All Loaded Color Groups",
-                selected = false,
-                focus = false,
+                visible = prefs.last_opened_tab == tab_id,
                 onclick = function()
                     local result = app.alert{
                         title = "Aseprite Companion: Reset All Loaded Color Groups?",
@@ -511,10 +511,12 @@ return function(plugin, dialog_title, fn_on_close)
                     update_groups_view(dialog)
                 end
             }
+            :newrow()
     end
     function tab_edit_mode(dialog)
+        local tab_id = "tab_edit_mode"
         dialog
-                :tab{ id="tab_edit_mode", text="Edit Groups" }
+                :tab{ id=tab_id, text="Edit Groups" }
                 :entry {
             id = "edit_mode_group_name",
             label = "Group Name",
@@ -524,8 +526,7 @@ return function(plugin, dialog_title, fn_on_close)
         :button {
             id = "edit_mode_rename",
             text = "Rename Group",
-            selected = false,
-            focus = false,
+            visible = prefs.last_opened_tab == tab_id,
             onclick = function()
                 if search.empty() then
                     return
@@ -544,6 +545,7 @@ return function(plugin, dialog_title, fn_on_close)
         :button {
             id = "edit_mode_add_colors",
             text = "Add Colors",
+            visible = prefs.last_opened_tab == tab_id,
             onclick = function()
                 if not app.sprite or search.empty() then
                     return
@@ -569,6 +571,7 @@ return function(plugin, dialog_title, fn_on_close)
         :button {
             id = "edit_mode_clear_colors",
             text = "Clear Colors",
+            visible = prefs.last_opened_tab == tab_id,
             onclick = function()
                 if search.empty() then
                     return
@@ -580,25 +583,27 @@ return function(plugin, dialog_title, fn_on_close)
                 update_groups_view(dialog)
             end
         }
+        :newrow()
     end
     function tab_labels(dialog)
+        local tab_id = "tab_label"
         dialog
-            :tab{ id="tab_label", text="Label" }
+            :tab{ id=tab_id, text="Label" }
             :combobox {
                 id = "label_labels",
                 label = "Existing Labels",
-                visible = false,
+                visible = prefs.last_opened_tab == tab_id,
                 options = search.get_color_group(1).labels,
             }
             :entry {
                 id = 'label_input',
                 label = "Add Label",
-                visible = false,
+                visible = prefs.last_opened_tab == tab_id,
             }
             :button {
                 id = "label_add",
                 text = "Add",
-                visible = false,
+                visible = prefs.last_opened_tab == tab_id,
                 onclick = function()
                     if search.empty() then
                         return
@@ -634,13 +639,13 @@ return function(plugin, dialog_title, fn_on_close)
             :combobox {
                 id = "label_labels_dropdown",
                 label = "Remove Label",
-                visible = false,
+                visible = prefs.last_opened_tab == tab_id,
                 options = prefs.color_groups[1].labels
             }
             :button {
                 id = "label_remove",
                 text = "Remove",
-                visible = false,
+                visible = prefs.last_opened_tab == tab_id,
                 onclick = function()
                     if search.empty() then
                         return
@@ -672,14 +677,16 @@ return function(plugin, dialog_title, fn_on_close)
                     update_bottom_label_view(dialog)
                 end
             }
+            :newrow()
     end
     function tab_search(dialog)
+        local tab_id = "tab_search"
         dialog
-            :tab{ id="tab_search", text="Search" }
+            :tab{ id=tab_id, text="Search" }
             :combobox {
                 id = "search_labels",
                 label = "Existing Labels",
-                visible = false,
+                visible = prefs.last_opened_tab == tab_id,
                 options = {},
                 onchange = function()
                 end
@@ -688,18 +695,18 @@ return function(plugin, dialog_title, fn_on_close)
                 id = 'search_and',
                 label = "All of (AND):",
                 text = prefs.last_search_and,
-                visible = false
+                visible = prefs.last_opened_tab == tab_id
             }
             :label {
                 id = "search_and_text",
                 text = "AND",
-                visible = false
+                visible = prefs.last_opened_tab == tab_id
             }
             :entry {
                 id = "search_or",
                 label = "Any of (OR):",
                 text = prefs.last_search_or,
-                visible = false,
+                visible = prefs.last_opened_tab == tab_id,
                 onclick = function()
                 end
             }
@@ -707,12 +714,12 @@ return function(plugin, dialog_title, fn_on_close)
                 id = "search_term",
                 label = "Term",
                 text = "(a1 ∧ a2 ∧ ... ∧ aN) ∧ (o1 ∨ o2 ∨ ... ∨ oM)",
-                visible = false
+                visible = prefs.last_opened_tab == tab_id
             }
             :button {
                 id = "search_start",
                 text = "Search",
-                visible = false,
+                visible = prefs.last_opened_tab == tab_id,
                 onclick = function()
                     local search_and = dialog.data.search_and
                     local search_or = dialog.data.search_or
@@ -733,7 +740,7 @@ return function(plugin, dialog_title, fn_on_close)
             :button {
                 id = "search_clear",
                 text = "Clear Search",
-                visible = false,
+                visible = prefs.last_opened_tab == tab_id,
                 onclick = function()
                     search.clear_search()
                     active_page = 1
@@ -744,11 +751,14 @@ return function(plugin, dialog_title, fn_on_close)
                     update_navigation(dialog)
                 end
             }
+            :newrow()
     end
     function tab_tools(dialog)
+        local tab_id = "tab_tools"
         dialog
-            :tab{ id="tab_tools", text="Tools" }
-            :button{ visible = false }
+            :tab{ id=tab_id, text="Tools" }
+            :button{ visible = prefs.last_opened_tab == tab_id }
+            :newrow()
     end
     function tab_color_groups(dialog)
         dialog
@@ -905,9 +915,11 @@ return function(plugin, dialog_title, fn_on_close)
 
     dialog:endtabs{
         id="tab_end",
-        selected="tab_edit_mode",
+        selected=prefs.last_opened_tab,
         align=Align.CENTER|Align.TOP,
         onchange=function(ev)
+            prefs.last_opened_tab = ev.tab
+
             update_guide_visibility(dialog, ev.tab == "tab_guide")
             update_view_visibility(dialog, ev.tab == "tab_view")
             update_edit_mode_visibility(dialog, ev.tab == "tab_edit_mode")

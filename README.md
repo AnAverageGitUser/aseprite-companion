@@ -40,28 +40,42 @@ A big thanks to Jon Cote for their work on this aseprite extension / plugin.
   - button for color group in shading tool (automatically adds color group to palette and selects shading tool with selection)
     - switch between pencil mode (single color selection) and shading mode
     - swap palette of selected layer
-  - search for color groups by labels
 - branch master (next tag 2.0.0)
-  - Breaking Change: the save file format changed from ".lua" to ".json", old save files will have to be recreated from scratch.
-  - Breaking Change: the color groups now use the RGBA color values instead of the palette indices, this makes color group usage more portable between sprites and makes palette syncing unnecessary.
-  - Better performance: performance is not (significantly) impaired by the number of color groups anymore.
-  - Increased number of color groups to 300.
-  - Changed color group page navigation to accommodate more color groups.
-  - Selection of active color group: the dropdown now only lists the visible color groups.
-  - The file name field is not cleared anymore upon loading of a color group file.
-  - The group name field is not cleared anymore upon color group renaming.
-  - Moved the dialogs from the `Sprite` menu into their own `Sprite > [Aseprite Companion]` sub menu.
-  - Reworked color groups dialog layout: tabs are now used for the top section.
-  - Limited concurrently open color groups dialogs to one.
-  - Color group dialogs can now be opened and used without an active sprite.
-    However, adding colors requires an active palette/sprite.
-  - Saving and loading plugin preferences for the color groups dialog.
-    Whenever the dialog is opened it loads previous color groups and the name of the last saved/loaded file and prefills
-    that data.
-    - Added "Reset All Loaded Color Groups" button for a clean start.
-      If this is not sufficient delete the `<aseprite>/extensions/aseprite-companion/__pref.lua` file to get a clean slate.
-  - Added a label tab in which labels can be removed and added to and from color groups.
-  - Completely changed color group selection as the aseprite plugin API was giving me a hard time with dropdown menus.
+  - `Color Groups` changed:
+    - General:
+      - Limited concurrently open color groups dialogs to one. If you set up a keyboard shortcut you can easily open/close this dialog whenever you need to, since the most important state is now kept in between dialog closings and openings.
+      - Moved the dialogs from the `Sprite` menu into their own `Sprite > [Aseprite Companion]` sub menu.
+      - Color group dialogs can now be opened and used without an active sprite. However, adding colors requires an active palette/sprite.
+      - Saving and loading plugin preferences for the color groups dialog. Whenever the dialog is opened it loads previous color groups and some other fields and prefills them. This is consistent over aseprite restarts. But please still save your color groups with the save / load mechanism as this preference feature seemed to be a bit more brittle.
+      - Reworked color groups dialog layout: tabs are now used for the top section.
+      - Changed color group page navigation to accommodate more color groups.
+      - Better performance: performance is not (significantly) impaired by the number of color groups anymore.
+      - Increased number of color groups to 300.
+      - The selection of a active color group for editing changed, because the aseprite plugin API was giving me a hard time with dropdown menus (you can not query the selected index, but only get an index).
+    - Added `Guide` tab:
+      - TODO: update description
+    - Added `View` tab:
+      - The number of shown color groups can be chosen within the range of 1 to 20. The default is now 10. You might want to teak this value because of selection performance and / or monitor resolution.
+      - Added a button to show/hide the selector display.
+      - Added a button to show/hide the label header row display.
+    - Added `Save/Load` tab:
+      - Breaking Change: the save file format changed from ".lua" to ".json", old save files will have to be recreated from scratch.
+      - Breaking Change: the color groups now use the RGBA color values instead of the palette indices, this makes color group usage more portable between sprites and makes palette syncing unnecessary.
+      - The file name field is not cleared anymore upon loading of a color group file.
+      - Added a button to clear and reset all loaded color groups for a clean start. If this is not sufficient delete (e.g. due to bugs) the `<aseprite>/extensions/aseprite-companion/__pref.lua` file to get a clean slate.
+    - Added `Edit Groups` tab:
+      - The group name field is not cleared anymore upon color group renaming.
+      - Changed layout.
+    - Added `Label` tab:
+      - Labels can be added and removed to and from color groups. It's a bit clunky, but probably sufficient.
+      - A label in this context is a string that has no whitespace characters within. Whitespaces are replaced by underscores.
+    - Added `Search` tab:
+      - The shown color groups can be filtered according to their labels.
+      - A first space separated list of labels can be provided to search for labels that a color group must all have.
+      - A second space separated list of labels can be provided to search for labels that a color group must have at least one of.
+      - More formally this expression matches a color group: `(and_1 ∧ and_2 ∧ ... ∧ and_N) ∧ (or_1 ∨ or_2 ∨ ... ∨ or_M)`.
+    - Added `Tools` tab:
+      - TODO: add planned tools
 - tag v1.3.0
   - Instead of 3 color group pages (with each 10 groups) there are now 10 color group pages
     (with each 10 groups).

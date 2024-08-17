@@ -2,6 +2,8 @@ colorshadesdialog = dofile("./color-shades/color-shades.lua")
 colorgroupsdialog = dofile("./color-groups/color-groups.lua")
 alert_extended = dofile("./shared/alert-extended.lua")
 
+local color_groups_dialog_instance
+
 function init(plugin)
     plugin:newMenuSeparator{
         group="sprite_crop"
@@ -13,31 +15,28 @@ function init(plugin)
         group="sprite_crop"
     }
 
-    local color_groups_is_open = false
     plugin:newCommand {
         id = "color_groups",
         title = "Color Groups",
         group = "aseprite_companion_group",
         onclick = function()
-            -- Check is UI available
             if not app.isUIAvailable then
                 return
             end
-            if color_groups_is_open then
-                alert_extended.alert_error{
-                    "Only one color groups dialog can be open at the same time."
-                }
-                return
-            end
-            color_groups_is_open = true
-            local groupsdialog = colorgroupsdialog(
+
+            if color_groups_dialog_instance == nil then
+                color_groups_dialog_instance = colorgroupsdialog(
                     plugin,
                     "Color Groups",
                     function()
-                        color_groups_is_open = false
+                        color_groups_dialog_instance = nil
                     end
-            )
-            groupsdialog:show { wait = false }
+                )
+                color_groups_dialog_instance:show { wait = false }
+            else
+                color_groups_dialog_instance:close()
+                color_groups_dialog_instance = nil
+            end
         end
     }
 
