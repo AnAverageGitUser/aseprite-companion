@@ -44,7 +44,7 @@ However, it won't be removed in case anyone prefers the simpler dialog.
 - Ideas
   - shading tool optimization: check if color group is already within the palette to not needlessly grow the palette
   - tool: swap palette of selected layers/cels/frames
-  - middle mouse click to remove: retrieve palette from selected layer (?)
+  - middle mouse click to remove color from color group (?)
 - branch master (to be tag 2.1.0)
   - `Edit Groups` tab:
     - Added tool `color retriever`: retrieve palette from all frames of the selected layers/cels/frames. Pixels that are fully transparent (alpha = 255) are ignored.
