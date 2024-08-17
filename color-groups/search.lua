@@ -4,6 +4,7 @@ local this = {
     valid_labels = {},
     search_and = {},
     search_or = {},
+    num_colors = {},
 }
 
 function this.contains(array, search_for)
@@ -36,19 +37,42 @@ function this.tag_search_string_to_list(tags_as_string)
     end
     return tags
 end
-function this.search(search_and, search_or)
+function this.calc_num_colors(num_colors_as_string)
+    if num_colors_as_string == nil
+        or #num_colors_as_string == 0
+        or num_colors_as_string == ""
+        or num_colors_as_string == "[ Any ]"
+    then
+        return nil
+    end
+    return tonumber(num_colors_as_string, 10)
+end
+function this.search(search_and, search_or, num_colors)
     this.color_groups_indices = {}
     this.valid_labels = this.get_all_labels()
     this.search_and = this.tag_search_string_to_list(search_and)
     this.search_or = this.tag_search_string_to_list(search_or)
+    this.num_colors = this.calc_num_colors(num_colors)
 
-    if #this.search_and == 0 and #this.search_or == 0 then
+    if #this.search_and == 0 and #this.search_or == 0 and this.num_colors == nil then
+        this.clear_search()
         return
     end
 
-    -- must fulfill clause: (and_1 ∧ and_2 ∧ ... ∧ and_n) ∧ (or_1 ∨ or_2 ∨ ... ∨ or_n)
+    -- must fulfill clause: num_colors_matches ∨ ((and_1 ∧ and_2 ∧ ... ∧ and_N) ∧ (or_1 ∨ or_2 ∨ ... ∨ or_M))
     for i=1, #this.color_groups do
         local color_group_labels = this.color_groups[i].labels
+        local color_group_num_colors = #this.color_groups[i].colors
+
+        -- only allow the colors according to the number of colors
+        if this.num_colors ~= nil then
+            if color_group_num_colors ~= this.num_colors then
+                goto skip_item
+            end
+            if #this.search_and == 0 and #this.search_or == 0 then
+                goto or_clause_match
+            end
+        end
 
         -- search all and-clauses
         for j=1, #this.search_and do
@@ -122,6 +146,22 @@ function this.get_all_labels()
     return tbl
 end
 
+function this.get_all_color_group_lengths()
+    local tbl = {}
+    table.insert(tbl, "[ Any ]")
+    for i=1, #this.color_groups do
+        local color_group_size = #this.color_groups[i].colors
+        for k=1, #tbl do
+            if tbl[k] == tostring(color_group_size) then
+                goto skip_this
+            end
+        end
+        table.insert(tbl, tostring(color_group_size))
+        ::skip_this::
+    end
+    return tbl
+end
+
 function this.get_labels_and()
     local as_str = ""
     for i=1, #this.search_and do
@@ -142,6 +182,10 @@ function this.get_labels_or()
         end
     end
     return as_str
+end
+
+function this.get_search_num_colors()
+    return this.num_colors
 end
 
 

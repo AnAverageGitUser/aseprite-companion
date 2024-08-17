@@ -7,9 +7,8 @@ search = dofile("./search.lua")
 
 local plugin_prefs
 local last_page
-local selected_tool = "tools_shading"
+local selected_tool = "tools_shading_add"
 local tool_use_replace_from = {}
-local last_palette_indices = {}
 local groups_folder_path = app.fs.userConfigPath .. "groups\\"
 local fast_forward_pages = 5
 local active_page = 1
@@ -31,6 +30,7 @@ local prefs = {
     last_save_file = "",
     last_search_and = "",
     last_search_or = "",
+    last_search_num_colors = nil,
     num_color_groups_per_page = 10,
     selection_visible = true,
     labels_visible = true,
@@ -91,6 +91,7 @@ function save_prefs()
     plugin_prefs.last_save_file = prefs.last_save_file
     plugin_prefs.last_search_and = prefs.last_search_and
     plugin_prefs.last_search_or = prefs.last_search_or
+    plugin_prefs.last_search_num_colors = prefs.last_search_num_colors
     plugin_prefs.num_color_groups_per_page = prefs.num_color_groups_per_page
     plugin_prefs.selection_visible = prefs.selection_visible
     plugin_prefs.labels_visible = prefs.labels_visible
@@ -235,13 +236,15 @@ function update_search_visibility(dialog, visible)
     dialog:modify{ id="search_and", visible=visible }
     dialog:modify{ id="search_and_text", visible=visible }
     dialog:modify{ id="search_or", visible=visible }
+    dialog:modify{ id="search_term", visible=visible }
+    dialog:modify{ id="search_num_color_filter", visible=visible }
     dialog:modify{ id="search_start", visible=visible }
     dialog:modify{ id="search_clear", visible=visible }
-    dialog:modify{ id="search_term", visible=visible }
 end
 function update_tools_visibility(dialog, visible)
     dialog:modify{ id="tools_pencil", visible=visible }
-    dialog:modify{ id="tools_shading", visible=visible }
+    dialog:modify{ id="tools_shading_add", visible=visible }
+    dialog:modify{ id="tools_shading_replace", visible=visible }
     dialog:modify{ id="tools_replace", visible=visible }
 end
 
@@ -336,12 +339,10 @@ function add_color_group_row(dialog, index)
                     elseif ev.button == MouseButton.RIGHT then
                         app.bgColor = ev.color
                     end
-                elseif selected_tool == "tools_shading" and app.sprite then
+                elseif selected_tool == "tools_shading_add" and app.sprite then
                     local pre_add = #app.sprite.palettes[1]
 
                     local current_color_group = search.get_color_group(shade_index)
-                    --print(tostring(#app.sprite.palettes[1]))
-                    --print(tostring(#app.sprite.palettes[1] + #current_color_group.colors))
                     app.sprite.palettes[1]:resize(#app.sprite.palettes[1] + #current_color_group.colors)
                     for i = 1, #current_color_group.colors do
                         local color = current_color_group.colors[i]
@@ -349,13 +350,32 @@ function add_color_group_row(dialog, index)
                         app.sprite.palettes[1]:setColor(pre_add - 1 + i, Color{ r=color.r, g=color.g, b=color.b, a=color.a })
                     end
                     local post_add = #app.sprite.palettes[1]
-                    last_palette_indices = {}
+
+                    local new_color_range_selection = {}
                     for i=pre_add, post_add - 1 do
-                        table.insert(last_palette_indices, i)
+                        table.insert(new_color_range_selection, i)
+                    end
+                    app.range.colors = new_color_range_selection
+
+                    app.tool = "pencil"
+                    -- we want the shading ink but we have to switch back and forth for the color range to update
+                    app.command.SetInkType { type = Ink.SIMPLE }
+                    app.command.SetInkType { type = Ink.SHADING }
+                elseif selected_tool == "tools_shading_replace" and app.sprite then
+                    local current_color_group = search.get_color_group(shade_index)
+                    app.sprite.palettes[1]:resize(#current_color_group.colors)
+                    for i = 1, #current_color_group.colors do
+                        local color = current_color_group.colors[i]
+                        app.sprite.palettes[1]:setColor(i - 1, Color{ r=color.r, g=color.g, b=color.b, a=color.a })
                     end
 
-                    app.range.colors = last_palette_indices
+                    local new_color_range_selection = {}
+                    for i=0, #current_color_group.colors - 1 do
+                        table.insert(new_color_range_selection, i)
+                    end
+                    app.range.colors = new_color_range_selection
 
+                    app.range.colors = new_color_range_selection
                     app.tool = "pencil"
                     -- we want the shading ink but we have to switch back and forth for the color range to update
                     app.command.SetInkType { type = Ink.SIMPLE }
@@ -520,10 +540,8 @@ return function(plugin, dialog_title, fn_on_close)
                     load_color_groups(file, dialog)
                     save_prefs()
 
-                    dialog:modify{
-                        id = "label_labels_dropdown",
-                        options = get_color_group_labels_for_dropdown(selection.index())
-                    }
+                    dialog:modify{ id = "label_labels_dropdown", options = get_color_group_labels_for_dropdown(selection.index()) }
+                    dialog:modify{ id = "search_num_color_filter", options = search.get_all_color_group_lengths() }
                 end
             }
             :button {
@@ -613,6 +631,7 @@ return function(plugin, dialog_title, fn_on_close)
                 end
                 save_prefs()
                 update_groups_view(dialog)
+                dialog:modify{ id = "search_num_color_filter", options = search.get_all_color_group_lengths() }
             end
         }
         :button {
@@ -628,6 +647,7 @@ return function(plugin, dialog_title, fn_on_close)
                 color_group.colors = {}
                 save_prefs()
                 update_groups_view(dialog)
+                dialog:modify{ id = "search_num_color_filter", options = search.get_all_color_group_lengths() }
             end
         }
         :newrow()
@@ -734,7 +754,7 @@ return function(plugin, dialog_title, fn_on_close)
                 id = "search_labels",
                 label = "Existing Labels",
                 visible = prefs.last_opened_tab == tab_id,
-                options = {},
+                options = search.get_all_labels(),
                 onchange = function()
                 end
             }
@@ -763,6 +783,12 @@ return function(plugin, dialog_title, fn_on_close)
                 text = "(a1 ∧ a2 ∧ ... ∧ aN) ∧ (o1 ∨ o2 ∨ ... ∨ oM)",
                 visible = prefs.last_opened_tab == tab_id
             }
+            :combobox{
+                id = "search_num_color_filter",
+                label = "Number of Colors in Group",
+                visible = prefs.last_opened_tab == tab_id,
+                options = search.get_all_color_group_lengths(),
+            }
             :button {
                 id = "search_start",
                 text = "Search",
@@ -770,11 +796,14 @@ return function(plugin, dialog_title, fn_on_close)
                 onclick = function()
                     local search_and = dialog.data.search_and
                     local search_or = dialog.data.search_or
-                    search.search(search_and, search_or)
+                    local num_colors = dialog.data.search_num_color_filter
+                    search.search(search_and, search_or, num_colors)
                     prefs.last_search_and = search.get_labels_and()
                     prefs.last_search_or = search.get_labels_or()
+                    prefs.last_search_num_colors = search.get_labels_or()
                     dialog:modify{ id = "search_and", text = prefs.last_search_and }
                     dialog:modify{ id = "search_or", text = prefs.last_search_or }
+                    dialog:modify{ id = "search_num_color_filter", text = prefs.last_search_num_colors }
 
                     active_page = 1
                     update_selection_page(active_page)
@@ -817,12 +846,20 @@ return function(plugin, dialog_title, fn_on_close)
                 end
             }
             :button{
-                id = "tools_shading",
+                id = "tools_shading_add",
                 label = "Color Group Shading",
-                text = "Add to Palette + Shading Ink",
+                text = "Add to Palette",
                 visible = prefs.last_opened_tab == tab_id,
                 onclick = function()
-                    selected_tool = "tools_shading"
+                    selected_tool = "tools_shading_add"
+                end
+            }
+            :button{
+                id = "tools_shading_replace",
+                text = "Replace Palette",
+                visible = prefs.last_opened_tab == tab_id,
+                onclick = function()
+                    selected_tool = "tools_shading_replace"
                 end
             }
             :button{
@@ -1022,6 +1059,7 @@ return function(plugin, dialog_title, fn_on_close)
 
             if ev.tab == "tab_search" then
                 dialog:modify{ id = "search_labels", options = search.get_all_labels() }
+                dialog:modify{ id = "search_num_color_filter", options = search.get_all_color_group_lengths() }
             end
         end
     }

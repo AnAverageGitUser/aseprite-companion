@@ -40,6 +40,7 @@ A big thanks to Jon Cote for their work on this aseprite extension / plugin.
   - shading tool optimization: check if color group is already within the palette to not needlessly grow the palette
   - shading tool: alternate mode: set the palette to the selected color group
   - tool: swap palette of selected layer
+  - tool: retrieve palette from selected layer
 - branch master (next tag 2.0.0)
   - `Color Groups` dialog changed:
     - General:
@@ -72,11 +73,13 @@ A big thanks to Jon Cote for their work on this aseprite extension / plugin.
       - The shown color groups can be filtered according to their labels.
       - A first space separated list of labels can be provided to search for labels that a color group must all have.
       - A second space separated list of labels can be provided to search for labels that a color group must have at least one of.
-      - More formally this expression matches a color group: `(and_1 ∧ and_2 ∧ ... ∧ and_N) ∧ (or_1 ∨ or_2 ∨ ... ∨ or_M)`.
+      - A number of colors can be selected that a coloring group must contain.
+      - More formally this expression matches a color group: `num_colors_matches ∨ ((and_1 ∧ and_2 ∧ ... ∧ and_N) ∧ (or_1 ∨ or_2 ∨ ... ∨ or_M))`.
     - Added `Tools` tab:
       - Only one tool can be active at the same time. Activate them by clicking on the tool buttons in this tab.
-      - Pencil tool: the only mode that was present up until tag v2.0.0 - left/right click on a color within a color group sets the foreground/background brush color. A click on this tool button also activates the pencil tool.
-      - Shading tool: clicking on any color within a color group sets adds the color group to the end of the active palette, selects the color group's colors as in active use for the shading tool and activates the shading tool.
+      - Pencil tool `Select Primary/Secondary Color`: the only mode that was present up until tag v2.0.0 - left/right click on a color within a color group sets the foreground/background brush color. A click on this tool button also activates the pencil tool.
+      - Shading tool `Add to Palette`: clicking on any color within a color group sets adds the color group to the end of the active palette, selects the color group's colors as in active use for the shading tool and activates the shading tool.
+      - Shading tool `Replace Palette`: clicking on any color within a color group replaces the active palette with the color group that was clicked, selects the color group's colors as in active use for the shading tool and activates the shading tool.
 - tag v1.3.0
   - Instead of 3 color group pages (with each 10 groups) there are now 10 color group pages
     (with each 10 groups).
