@@ -215,6 +215,7 @@ end
 function update_edit_mode_visibility(dialog, visible)
     dialog:modify{ id="edit_mode_add_colors", visible=visible }
     dialog:modify{ id="edit_mode_clear_colors", visible=visible }
+    dialog:modify{ id="edit_mode_add_colors_from_layers", visible=visible }
     dialog:modify{ id="edit_mode_rename", visible=visible }
 end
 function update_save_load_visibility(dialog, visible)
@@ -303,6 +304,52 @@ function update_page_widgets_visibility(dialog)
     for i=1, max_page_size do
         local visible = i <= prefs.num_color_groups_per_page
         dialog:modify{ id = "Shade" .. tostring(i), visible = visible }
+    end
+end
+function convert_32bit_color_array_to_table_colors(array_32bit)
+    local tbl = {}
+    for i=1, #array_32bit do
+        local r = app.pixelColor.rgbaR(array_32bit[i])
+        local g = app.pixelColor.rgbaG(array_32bit[i])
+        local b = app.pixelColor.rgbaB(array_32bit[i])
+        local a = app.pixelColor.rgbaA(array_32bit[i])
+        table.insert(tbl, {r=r, g=g, b=b, a=a})
+    end
+    return tbl
+end
+function insert_color_if_not_contained(array_32bit, color_32bit)
+    if app.pixelColor.rgbaA(color_32bit) == 0 then
+        return -- skip fully transparent pixels for the palette
+    end
+    for i=1, #array_32bit do
+        if array_32bit[i] == color_32bit then
+            return -- no duplicates
+        end
+    end
+    table.insert(array_32bit, color_32bit)
+end
+function add_colors_from_single_layer(color_group_32bit, layer)
+    for i = 1,#layer.cels do
+        local cel = layer.cels[i]
+        add_colors_from_single_cel(color_group_32bit, cel)
+    end
+end
+function add_colors_from_single_frame(color_group_32bit, layer, frame_id)
+    local cel = layer:cel(frame_id)
+    add_colors_from_single_cel(color_group_32bit, cel)
+end
+function add_colors_from_single_cel(color_group_32bit, cel)
+    if cel == nil then
+        return
+    end
+    local image = cel.image
+    if image == nil then
+        return
+    end
+
+    for px_iter in image:pixels() do
+        local px_32bit = px_iter()
+        insert_color_if_not_contained(color_group_32bit, px_32bit)
     end
 end
 function add_color_group_row(dialog, index)
@@ -645,6 +692,64 @@ return function(plugin, dialog_title, fn_on_close)
                 local group_idx = selection.index()
                 local color_group = search.get_color_group(group_idx)
                 color_group.colors = {}
+                save_prefs()
+                update_groups_view(dialog)
+                dialog:modify{ id = "search_num_color_filter", options = search.get_all_color_group_lengths() }
+            end
+        }
+        :newrow()
+        :button {
+            id = "edit_mode_add_colors_from_layers",
+            text = "Add Palette of Selected Layers/Cels/Frames",
+            visible = prefs.last_opened_tab == tab_id,
+            onclick = function()
+                if not app.sprite or search.empty() or not app.range or not app.range.layers then
+                    return
+                end
+                local color_group_32bit = {}
+                if app.range.type == RangeType.LAYERS then
+                    local layers = app.range.layers
+                    for i = 1,#layers do
+                        local layer = app.range.layers[i]
+                        if layer.isGroup then
+                            for inner_i = 1,#layer.layers do
+                                local inner_layer = layer.layers[inner_i]
+                                add_colors_from_single_layer(color_group_32bit, inner_layer)
+                            end
+                        else
+                            add_colors_from_single_layer(color_group_32bit, layer)
+                        end
+                    end
+                elseif app.range.type == RangeType.FRAMES then
+                    local layers = app.sprite.layers
+                    for i = 1, #layers do
+                        local layer = layers[i]
+                        if layer.isGroup then
+                            for inner_i = 1,#layer.layers do
+                                local inner_layer = layer.layers[inner_i]
+                                for j = 1, #app.range.frames do
+                                    local frame = app.range.frames[j]
+                                    add_colors_from_single_frame(color_group_32bit, inner_layer, frame)
+                                end
+                            end
+                        else
+                            for j = 1, #app.range.frames do
+                                local frame = app.range.frames[j]
+                                add_colors_from_single_frame(color_group_32bit, layer, frame)
+                            end
+                        end
+                    end
+                elseif app.range.type == RangeType.CELS then
+                    local cels = app.range.cels
+                    for i = 1, #cels do
+                        local cel = cels[i]
+                        add_colors_from_single_cel(color_group_32bit, cel)
+                    end
+                else
+                    return
+                end
+                search.get_color_group(selection.index()).colors = convert_32bit_color_array_to_table_colors(color_group_32bit)
+
                 save_prefs()
                 update_groups_view(dialog)
                 dialog:modify{ id = "search_num_color_filter", options = search.get_all_color_group_lengths() }

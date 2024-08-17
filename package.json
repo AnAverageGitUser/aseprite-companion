@@ -2,7 +2,7 @@
   "name": "aseprite-companion",
   "displayName": "Aseprite Companion",
   "description": "An extension providing additional features for Aseprite",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "author": {
     "name": "Jon Cote",
     "email": "contact@joncote.com",

@@ -18,10 +18,10 @@ This can be done over the menu `Edit > Keyboard Shortcuts...`.
 # Aseprite Compatibility
 The following aseprite versions have been tested successfully for compatibility with this extension:
 
-| aseprite version | tested aseprite companion version |
-|------------------|-----------------------------------|
-| 1.3.2            | 2.0.0, 1.3.0, 1.1.1               |
-| 1.3-beta4        | 1.1.1, 1.1.0, 1.0.0               |
+| aseprite version | tested aseprite companion version        |
+|------------------|------------------------------------------|
+| 1.3.2            | 2.1.0, 2.0.0, 1.3.0, 1.2.0, 1.1.2, 1.1.1 |
+| 1.3-beta4        | 1.1.1, 1.1.0, 1.0.0                      |
 
 If you have another version, this extension might still work, you'll have to try it yourself.
 
@@ -44,9 +44,11 @@ However, it won't be removed in case anyone prefers the simpler dialog.
 - Ideas
   - shading tool optimization: check if color group is already within the palette to not needlessly grow the palette
   - tool: swap palette of selected layer
-  - tool: retrieve palette from selected layer
-- branch master
-  - no changes yet
+  - middle mouse click to remove: retrieve palette from selected layer
+  - color retriever: sort colors by hue and lightness
+- branch master (to be tag 2.1.0)
+  - `Edit Groups` tab:
+    - Added tool `color retriever`: retrieve palette from all frames of the selected layers/cels/frames.
 - tag 2.0.0
   - `Color Groups` dialog changed:
     - General:
