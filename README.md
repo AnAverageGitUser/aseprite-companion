@@ -37,11 +37,11 @@ A big thanks to Jon Cote for their work on this aseprite extension / plugin.
 
 # Changelog
 - Planned / Ideas
-  - button for color group in shading tool (automatically adds color group to palette and selects shading tool with selection)
-    - switch between pencil mode (single color selection) and shading mode
-    - swap palette of selected layer
+  - shading tool optimization: check if color group is already within the palette to not needlessly grow the palette
+  - shading tool: alternate mode: set the palette to the selected color group
+  - tool: swap palette of selected layer
 - branch master (next tag 2.0.0)
-  - `Color Groups` changed:
+  - `Color Groups` dialog changed:
     - General:
       - Limited concurrently open color groups dialogs to one. If you set up a keyboard shortcut you can easily open/close this dialog whenever you need to, since the most important state is now kept in between dialog closings and openings.
       - Moved the dialogs from the `Sprite` menu into their own `Sprite > [Aseprite Companion]` sub menu.
@@ -52,8 +52,7 @@ A big thanks to Jon Cote for their work on this aseprite extension / plugin.
       - Better performance: performance is not (significantly) impaired by the number of color groups anymore.
       - Increased number of color groups to 300.
       - The selection of a active color group for editing changed, because the aseprite plugin API was giving me a hard time with dropdown menus (you can not query the selected index, but only get an index).
-    - Added `Guide` tab:
-      - TODO: update description
+    - Added `Guide` tab: moved the description into this tab.
     - Added `View` tab:
       - The number of shown color groups can be chosen within the range of 1 to 20. The default is now 10. You might want to teak this value because of selection performance and / or monitor resolution.
       - Added a button to show/hide the selector display.
@@ -75,7 +74,9 @@ A big thanks to Jon Cote for their work on this aseprite extension / plugin.
       - A second space separated list of labels can be provided to search for labels that a color group must have at least one of.
       - More formally this expression matches a color group: `(and_1 ∧ and_2 ∧ ... ∧ and_N) ∧ (or_1 ∨ or_2 ∨ ... ∨ or_M)`.
     - Added `Tools` tab:
-      - TODO: add planned tools
+      - Only one tool can be active at the same time. Activate them by clicking on the tool buttons in this tab.
+      - Pencil tool: the only mode that was present up until tag v2.0.0 - left/right click on a color within a color group sets the foreground/background brush color. A click on this tool button also activates the pencil tool.
+      - Shading tool: clicking on any color within a color group sets adds the color group to the end of the active palette, selects the color group's colors as in active use for the shading tool and activates the shading tool.
 - tag v1.3.0
   - Instead of 3 color group pages (with each 10 groups) there are now 10 color group pages
     (with each 10 groups).
@@ -95,7 +96,7 @@ A big thanks to Jon Cote for their work on this aseprite extension / plugin.
   - Added "Add Shades to Palette" button.
   - Relabeled "Enable Create Mode" button to "Enable Edit Mode".
 - tag v1.1.0
-  - Added `Color Groups`:
+  - Added `Color Groups` dialog:
     - Group your colors and rename them for easy identification and a consistent style.
     - Click on any color in a color group to select it as primary color for drawing.
     - Save/load your color groups as/from external files.
@@ -105,7 +106,7 @@ A big thanks to Jon Cote for their work on this aseprite extension / plugin.
       - This was changed in version `2.0.0`.
 - tag v1.0.0
   - First release of the aseprite companion.
-  - Added `Color Shades`: Quickly create color shade ramps from a selected base color. Some options like hue, saturation and
+  - Added `Color Shades` dialog: Quickly create color shade ramps from a selected base color. Some options like hue, saturation and
     lightness are available.
     - If you have more complex needs for creating color shade ramps I suggest you have a look at
       [Chaonic's Palette Helper](https://chaonic.itch.io/aseprite-palette-helper)

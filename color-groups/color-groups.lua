@@ -7,7 +7,9 @@ search = dofile("./search.lua")
 
 local plugin_prefs
 local last_page
-local current_label_dropdown_data = {}
+local selected_tool = "tools_shading"
+local tool_use_replace_from = {}
+local last_palette_indices = {}
 local groups_folder_path = app.fs.userConfigPath .. "groups\\"
 local fast_forward_pages = 5
 local active_page = 1
@@ -237,6 +239,11 @@ function update_search_visibility(dialog, visible)
     dialog:modify{ id="search_clear", visible=visible }
     dialog:modify{ id="search_term", visible=visible }
 end
+function update_tools_visibility(dialog, visible)
+    dialog:modify{ id="tools_pencil", visible=visible }
+    dialog:modify{ id="tools_shading", visible=visible }
+    dialog:modify{ id="tools_replace", visible=visible }
+end
 
 function update_selection_visibility(dialog, visible)
     for i = 1, max_page_size do
@@ -309,6 +316,7 @@ function add_color_group_row(dialog, index)
     local visible_label = visible_index and prefs.labels_visible
     local visible_selector = visible_index and prefs.selection_visible and index - 1 == selection.offset()
     local color_group = search.get_color_group(index)
+    local shade_index = index
     dialog
         :label { id = "ShadeSeparatorTop" .. tostring(index), label = " ▼▼▼ ", text = " ▼▼▼ Selected ▼▼▼", visible = visible_selector }
         :label { id = "ShadeSeparatorLabels" .. tostring(index), label = "Labels", visible = visible_label }
@@ -319,10 +327,48 @@ function add_color_group_row(dialog, index)
             mode = "pick",
             colors = get_shade_color_table(color_group.colors),
             onclick = function(ev)
-                if ev.button == MouseButton.LEFT then
-                    app.fgColor = ev.color
-                elseif ev.button == MouseButton.RIGHT then
-                    app.bgColor = ev.color
+                if selected_tool == "tools_pencil" then
+                    app.tool = "pencil"
+                    app.command.SetInkType { type = Ink.SIMPLE }
+
+                    if ev.button == MouseButton.LEFT then
+                        app.fgColor = ev.color
+                    elseif ev.button == MouseButton.RIGHT then
+                        app.bgColor = ev.color
+                    end
+                elseif selected_tool == "tools_shading" and app.sprite then
+                    local pre_add = #app.sprite.palettes[1]
+
+                    local current_color_group = search.get_color_group(shade_index)
+                    --print(tostring(#app.sprite.palettes[1]))
+                    --print(tostring(#app.sprite.palettes[1] + #current_color_group.colors))
+                    app.sprite.palettes[1]:resize(#app.sprite.palettes[1] + #current_color_group.colors)
+                    for i = 1, #current_color_group.colors do
+                        local color = current_color_group.colors[i]
+                        --app.command.AddColor { color=Color{ r=color.r, g=color.g, b=color.b, a=color.a } } -- does not work
+                        app.sprite.palettes[1]:setColor(pre_add - 1 + i, Color{ r=color.r, g=color.g, b=color.b, a=color.a })
+                    end
+                    local post_add = #app.sprite.palettes[1]
+                    last_palette_indices = {}
+                    for i=pre_add, post_add - 1 do
+                        table.insert(last_palette_indices, i)
+                    end
+
+                    app.range.colors = last_palette_indices
+
+                    app.tool = "pencil"
+                    -- we want the shading ink but we have to switch back and forth for the color range to update
+                    app.command.SetInkType { type = Ink.SIMPLE }
+                    app.command.SetInkType { type = Ink.SHADING }
+                elseif selected_tool == "tools_replace" and app.sprite then
+                    -- TODO
+                    app.alert{
+                        title = "Aseprite Companion: TODO",
+                        text = {
+                            "This is not implemented yet."
+                        },
+                        buttons = { "Close" }
+                    }
                 end
             end
         }
@@ -472,6 +518,7 @@ return function(plugin, dialog_title, fn_on_close)
                     save_prefs()
 
                     load_color_groups(file, dialog)
+                    save_prefs()
 
                     dialog:modify{
                         id = "label_labels_dropdown",
@@ -757,7 +804,45 @@ return function(plugin, dialog_title, fn_on_close)
         local tab_id = "tab_tools"
         dialog
             :tab{ id=tab_id, text="Tools" }
-            :button{ visible = prefs.last_opened_tab == tab_id }
+            :button{
+                id = "tools_pencil",
+                label = "Single Color Pencil",
+                text = "Select Primary/Secondary Color",
+                visible = prefs.last_opened_tab == tab_id,
+                onclick = function()
+                    if not app.sprite then
+                        return
+                    end
+                    selected_tool = "tools_pencil"
+                end
+            }
+            :button{
+                id = "tools_shading",
+                label = "Color Group Shading",
+                text = "Add to Palette + Shading Ink",
+                visible = prefs.last_opened_tab == tab_id,
+                onclick = function()
+                    selected_tool = "tools_shading"
+                end
+            }
+            :button{
+                id = "tools_replace",
+                label = "Color Group Replace",
+                text = "Replace Colors in Selected Layers",
+                visible = prefs.last_opened_tab == tab_id,
+                onclick = function()
+                    selected_tool = "tools_replace"
+                    app.alert{
+                        title = "Aseprite Companion: TODO",
+                        text = {
+                            "This is not implemented yet."
+                        },
+                        buttons = { "Close" }
+                    }
+                    -- TODO
+                    --https://www.aseprite.org/api/command/ReplaceColor#replacecolor
+                end
+            }
             :newrow()
     end
     function tab_color_groups(dialog)
@@ -926,6 +1011,7 @@ return function(plugin, dialog_title, fn_on_close)
             update_save_load_visibility(dialog, ev.tab == "tab_save_load")
             update_label_visibility(dialog, ev.tab == "tab_label")
             update_search_visibility(dialog, ev.tab == "tab_search")
+            update_tools_visibility(dialog, ev.tab == "tab_tools")
 
             if ev.tab == "tab_label" then
                 dialog:modify{ id = "label_labels", options = search.get_all_labels() }
