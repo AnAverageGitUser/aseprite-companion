@@ -45,7 +45,9 @@ However, it won't be removed in case anyone prefers the simpler dialog.
   - shading tool optimization: check if color group is already within the palette to not needlessly grow the palette
   - tool: swap palette of selected layer
   - tool: retrieve palette from selected layer
-- branch master (next tag 2.0.0)
+- branch master
+  - no changes yet
+- tag 2.0.0
   - `Color Groups` dialog changed:
     - General:
       - Limited concurrently open color groups dialogs to one. If you set up a keyboard shortcut you can easily open/close this dialog whenever you need to, since the most important state is now kept in between dialog closings and openings.
