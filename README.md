@@ -156,7 +156,9 @@ However, it won't be removed in case anyone prefers the simpler dialog.
     - this is put on halt: more often I use the replace palette mode
   - middle mouse click to remove color from color group
     - this is put on halt: I don't really need that right now
-- branch master (to be tag 2.1.0)
+- branch master
+  - no changes yet
+- tag 2.1.0
   - Removed the `Guide` tab as the explanation was getting to big for the dialog. If you need documentation, refer to the readme document.
   - `Edit Groups` tab:
     - Added button `color retriever`: retrieve palette from all frames of the selected layers/cels/frames. Pixels that are fully transparent (alpha = 255) are ignored.
