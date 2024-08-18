@@ -171,6 +171,7 @@ function update_tools_visibility(dialog, visible)
     dialog:modify{ id="tools_shading_replace", visible=visible }
     dialog:modify{ id="tools_replace_select", visible=visible }
     dialog:modify{ id="tools_replace", visible=visible }
+    dialog:modify{ id="tools_check_pixels", visible=visible }
 end
 
 function update_selection_visibility(dialog, visible)
@@ -251,30 +252,6 @@ function insert_color_if_not_contained(array_32bit, color_32bit)
         end
     end
     table.insert(array_32bit, color_32bit)
-end
-function add_colors_from_single_layer(color_group_32bit, layer)
-    for i = 1,#layer.cels do
-        local cel = layer.cels[i]
-        add_colors_from_single_cel(color_group_32bit, cel)
-    end
-end
-function add_colors_from_single_frame(color_group_32bit, layer, frame_id)
-    local cel = layer:cel(frame_id)
-    add_colors_from_single_cel(color_group_32bit, cel)
-end
-function add_colors_from_single_cel(color_group_32bit, cel)
-    if cel == nil then
-        return
-    end
-    local image = cel.image
-    if image == nil then
-        return
-    end
-
-    for px_iter in image:pixels() do
-        local px_32bit = px_iter()
-        insert_color_if_not_contained(color_group_32bit, px_32bit)
-    end
 end
 function add_color_group_row(dialog, index)
     function get_shade_color_table(tbl)
@@ -365,6 +342,74 @@ function add_color_group_row(dialog, index)
                     elseif ev.button == MouseButton.RIGHT then
                         tool_replace_target_real_index = real_index
                     end
+                elseif selected_tool == "tools_check_pixels" then
+                    local worked_on_images = {}
+                    local check_colors = search.get_real_color_group(shade_index).colors
+                    local colors_not_inside = { }
+
+                    if not app.sprite then
+                        alert_extended.alert_error("This only works if a sprite is active.")
+                        return
+                    end
+                    if not app.range or app.range.type == RangeType.EMPTY then
+                        alert_extended.alert_error({
+                            "Nothing is selected.",
+                            "First select layers, frames or cels.",
+                        })
+                        return
+                    end
+                    for_selection_do(function(cel)
+                        if cel == nil then
+                            return
+                        end
+                        local image = cel.image
+                        if image == nil then
+                            return
+                        end
+                        if search.contains(worked_on_images, image.id) then
+                            -- if cells are linked, they share the same image, we do not want check them again
+                            return
+                        end
+                        table.insert(worked_on_images, image.id)
+
+                        for px_iter in image:pixels() do
+                            local px_32bit = px_iter()
+                            local r = app.pixelColor.rgbaR(px_32bit)
+                            local g = app.pixelColor.rgbaG(px_32bit)
+                            local b = app.pixelColor.rgbaB(px_32bit)
+                            local a = app.pixelColor.rgbaA(px_32bit)
+                            -- check if the color is in the selected group
+                            for i = 1, #check_colors do
+                                local check_color = check_colors[i]
+                                if check_color.r == r and check_color.g == g and check_color.b == b and check_color.a == a then
+                                    goto skip_color
+                                end
+                            end
+                            -- check if the color is in the set of colors we already took note of
+                            for i = 1, #colors_not_inside do
+                                local check_color = colors_not_inside[i]
+                                if check_color.r == r and check_color.g == g and check_color.b == b and check_color.a == a then
+                                    goto skip_color
+                                end
+                            end
+                            table.insert(colors_not_inside, { r=r, g=g, b=b, a=a })
+                            ::skip_color::
+                        end
+                    end)
+                    local colors_not_inside_txt = ""
+                    for i = 1, #colors_not_inside do
+                        local check_color = colors_not_inside[i]
+                        colors_not_inside_txt = colors_not_inside_txt .. "RGBA("..check_color.r..","..check_color.g..","..check_color.b..","..check_color.a..");"
+                    end
+
+                    local info_dlg = Dialog { title = "Aseprite Companion: Stray Color Results" }
+                            :label{ text = "A total of " .. #colors_not_inside .. " unique colors that were not within the selected color group were found." }
+                    if #colors_not_inside ~= 0 then
+                        info_dlg:newrow()
+                                :label{ text = "They have the following values:" }
+                                :entry{ label = "Copy Me:", text = colors_not_inside_txt }
+                    end
+                    info_dlg:show{ wait = true }
                 else
                     alert_extended.alert_error("Internal error: The active tool is unknown.")
                 end
@@ -397,17 +442,6 @@ function update_navigation(dialog)
     dialog:modify{ id = "nav-last", enabled = enable_next }
 end
 function for_selection_do(fn_exec_on_cel)
-    if not app.sprite then
-        alert_extended.alert_error("This only works if a sprite is active.")
-        return
-    end
-    if not app.range or app.range.type == RangeType.EMPTY then
-        alert_extended.alert_error({
-            "Nothing is selected.",
-            "First select layers, frames or cels.",
-        })
-        return
-    end
     if app.range.type == RangeType.LAYERS then
         local layers = app.range.layers
         for i = 1,#layers do
@@ -699,6 +733,17 @@ return function(plugin, dialog_title, fn_on_close)
             text = "Add Palette of Selected Layers/Cels/Frames",
             visible = prefs.last_opened_tab == tab_id,
             onclick = function()
+                if not app.sprite then
+                    alert_extended.alert_error("This only works if a sprite is active.")
+                    return
+                end
+                if not app.range or app.range.type == RangeType.EMPTY then
+                    alert_extended.alert_error({
+                        "Nothing is selected.",
+                        "First select layers, frames or cels.",
+                    })
+                    return
+                end
                 if search.empty() then
                     alert_extended.alert_error("No color group is selected.")
                     return
@@ -972,6 +1017,13 @@ return function(plugin, dialog_title, fn_on_close)
                         alert_extended.alert_error("Replacing colors is only possible if a sprite is active.")
                         return
                     end
+                    if not app.range or app.range.type == RangeType.EMPTY then
+                        alert_extended.alert_error({
+                            "Nothing is selected.",
+                            "First select layers, frames or cels.",
+                        })
+                        return
+                    end
                     if app.sprite.colorMode == ColorMode.RGB then
                         -- continue, this is the mode we want
                     elseif app.sprite.colorMode == ColorMode.GRAY then
@@ -1042,6 +1094,16 @@ return function(plugin, dialog_title, fn_on_close)
                         end)
                         app.command.Refresh()
                     end)
+                end
+            }
+            :newrow()
+            :button{
+                id = "tools_check_pixels",
+                label = "Check Selection",
+                text = "Check for Stray Colors",
+                visible = prefs.last_opened_tab == tab_id,
+                onclick = function()
+                    selected_tool = "tools_check_pixels"
                 end
             }
             :newrow()

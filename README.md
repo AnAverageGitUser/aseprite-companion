@@ -77,6 +77,11 @@ This can be done over the menu `Edit > Keyboard Shortcuts...`.
   - Button **Replace Colors in Selection**
     - When clicked and if the \<input> and \<target> group have previously been selected and the \<target> group has the same amount of colors as the \<input> group:
         - replaces all colors that match the \<input> group's colors in the selected layers/frames/cels, with the colors of the \<target> group. This replacement will be done by the index of the color in both color groups.
+  - Button **Check for Stray Colors**
+    - When clicked:
+      - Activates this tool.
+    - If active:
+      - clicking onto a color group's color will check if any colors of the selected layers/frames/cels are not within that color group and list their RGBA values if there were any.
 - Paged Color Group List
   - Button **▲**: Move the color group selection upward. Wraps around.
   - Button **▼**: Move the color group selection downward. Wraps around.
@@ -124,6 +129,7 @@ However, it won't be removed in case anyone prefers the simpler dialog.
   - `Tools` tab:
     - Added button **Select \<input>/\<target> Groups**.
     - Added functionality to the `Replace Colors in Selection` button.
+    - Added button **Check for Stray Colors**.
 - tag 2.0.0
   - `Color Groups` dialog changed:
     - General:
