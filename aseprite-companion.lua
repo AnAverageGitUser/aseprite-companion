@@ -27,7 +27,7 @@ function init(plugin)
             if color_groups_dialog_instance == nil then
                 color_groups_dialog_instance = colorgroupsdialog(
                     plugin,
-                    "Color Groups",
+                    "Aseprite Companion: Color Groups",
                     function()
                         color_groups_dialog_instance = nil
                     end
@@ -50,14 +50,14 @@ function init(plugin)
                 return
             end
 
-            local shadesdialog = colorshadesdialog("Color Shades")
+            local shadesdialog = colorshadesdialog("Aseprite Companion: Color Shades")
             shadesdialog:show { wait = false }
         end
     }
 
     plugin:newCommand {
         id = "aseprite-companion",
-        title = "About Aseprite Companion",
+        title = "About",
         group = "aseprite_companion_group",
         onclick = function()
             -- Check is UI available
