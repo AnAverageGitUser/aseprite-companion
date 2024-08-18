@@ -295,7 +295,7 @@ function add_color_group_row(dialog, index)
                     end
                     local pre_add = #app.sprite.palettes[1]
 
-                    local current_color_group = search.get_color_group(shade_index)
+                    local current_color_group = search.get_color_group(shade_index - 1 + selection.range_min)
                     app.sprite.palettes[1]:resize(#app.sprite.palettes[1] + #current_color_group.colors)
                     for i = 1, #current_color_group.colors do
                         local color = current_color_group.colors[i]
@@ -318,7 +318,7 @@ function add_color_group_row(dialog, index)
                         alert_extended.alert_error("This only works if a sprite is active.")
                         return
                     end
-                    local current_color_group = search.get_color_group(shade_index)
+                    local current_color_group = search.get_color_group(shade_index - 1 + selection.range_min)
                     app.sprite.palettes[1]:resize(#current_color_group.colors)
                     for i = 1, #current_color_group.colors do
                         local color = current_color_group.colors[i]
@@ -337,7 +337,7 @@ function add_color_group_row(dialog, index)
                     app.command.SetInkType { type = Ink.SIMPLE }
                     app.command.SetInkType { type = Ink.SHADING }
                 elseif selected_tool == "tools_replace_select" then
-                    local real_index = search.get_real_color_group_index(shade_index)
+                    local real_index = search.get_real_color_group_index(shade_index - 1 + selection.range_min)
                     if ev.button == MouseButton.LEFT then
                         tool_replace_input_real_index = real_index
                     elseif ev.button == MouseButton.RIGHT then
@@ -345,7 +345,7 @@ function add_color_group_row(dialog, index)
                     end
                 elseif selected_tool == "tools_check_pixels" then
                     local worked_on_images = {}
-                    local check_colors = search.get_real_color_group(shade_index).colors
+                    local check_colors = search.get_real_color_group(shade_index - 1 + selection.range_min).colors
                     local colors_not_inside = { }
 
                     if not app.sprite then
