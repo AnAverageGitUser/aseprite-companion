@@ -1,11 +1,15 @@
 # aseprite companion
 This is an aseprite extension that provides additional features for [aseprite](https://www.aseprite.org/).
 
-It provides a color groups dialog for grouping colors and naming color groups and a color shades dialog for the creation
-of simple color shade ramps.
+It provides a powerful color groups dialog for grouping colors, naming-, labeling- and searching color groups.
+Additionally some image processing functions related to color groups are provided too.
+
+A color shades dialog for the creation of simple color shade ramps is also provided.
 
 # Installation
-You can add extensions in the `.zip` file format over `Edit > Preferences... > Extensions > Add Extension`.
+ - Download one of the github released `aseprite-companion-vA.B.C.zip` files.
+ - You can add the downloaded file in aseprite at `Edit > Preferences... > Extensions > Add Extension`.
+ - Select the downloaded `.zip` file in the `Add Extension` prompt.
 
 [Official aseprite plugin documentation](https://www.aseprite.org/api/plugin).
 
