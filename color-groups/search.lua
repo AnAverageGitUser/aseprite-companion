@@ -194,6 +194,14 @@ function this.get_color_group(i)
     return this.color_groups[mapped_index]
 end
 
+function this.get_real_color_group_index(i)
+    return this.color_groups_indices[i]
+end
+
+function this.get_real_color_group(i)
+    return this.color_groups[i]
+end
+
 function this.num_results()
     return #this.color_groups_indices
 end

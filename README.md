@@ -15,6 +15,78 @@ Aseprite companion's dialogs can be found in the menu `Sprite > [Aseprite Compan
 I recommend assigning a shortcut to the color groups dialog, e.g. `CTRL + G`.
 This can be done over the menu `Edit > Keyboard Shortcuts...`.
 
+`Color Groups` Dialog:
+- Tab **View**
+  - Groups per Page
+    - With this setting your can change indirectly change the height of the dialog. Depending on your resolution you might want to use more or less color groups that are visible per page. Higher values are worse than lower values regarding performance.
+    - Button **<**: decrease the number of shown color groups per page by one, down to a minimum of 1.
+    - Button **>**: increase the number of shown color groups per page by one, up to a maximum of 20.
+  - **Selector** button **Show / Hide**: show or hide the selection labels and buttons. You can hide them if you are done editing your color groups and want to remove clutter from the dialog.
+  - **Labels** button **Show / Hide**: show or hide the labels above the color groups. You can hide them if you are not using labels much to remove clutter from the dialog.
+- Tab **Save/Load**
+  - Input **File Name**: enter a file name that you want to your color groups to be saved to.
+  - Button **Save**: saves your color groups to the entered file name.
+  - Button **Load**: loads your color groups from the entered file name.
+  - Button **Open Folder**: open your color groups folder. Useful to get an existing file name to load.
+  - Button **Reset All Loaded Color Groups**: clears and reset all loaded color groups for a clean start. If this is not sufficient delete (e.g. due to bugs) the `<aseprite>/extensions/aseprite-companion/__pref.lua` file to get a clean slate.
+- Tab **Edit Groups**
+  - Input **Group Name**: enter a name that you want to set a group's name to.
+  - Button **Rename Group**: renames the selected group to the given name.
+  - Button **Add Colors**: adds selected colors from the active palette to the selected group.
+  - Button **Clear Colors**: clears all colors from selected group.
+  - Button **Add Palette of Selected Layers/Cels/Frames**: replaces the selected color group's colors with the ones found in the selected layers/cels/frames.
+- Tab **Label**
+  - Dropdown **Existing Labels**: lists all existing labels as an overview.
+  - Input **Add Label**: enter a label that you would like to add to a group. Whitespace characters are replaced by underscores. Empty labels are not allowed.
+  - Button **Add**: adds the entered label to the selected group. 
+  - Dropdown **Remove Labels**: lists all labels that the selected group has. Select the label you want to remove here.
+  - Button **Remove**: removes the selected label from the selected group. 
+- Tab **Search**
+  - Dropdown **Existing Labels**: lists all existing labels as an overview.
+  - Input **All of (AND)**: enter multiple labels by separating them with a space by which you want to filter the groups. All of these labels must be present in a group for that group to be shown.
+  - Input **Any of (OR)**: enter multiple labels by separating them with a space by which you want to filter the groups. At least one of these labels must be present in a group for that group to be shown.
+  - Dropdown **Number of Colors**: select the number of colors your want shown groups to have.
+  - Button **Search**: search according to the specified search rules. Labels that do not exist or are duplicate within the search label inputs will be removed from their text field, so you can see what really was searched for.
+  - Button **Clear Search**: clears the search and shows all color groups.
+- Tab **Tools**
+  - Button **Select Primary/Secondary Color**
+    - This is the active default tool.
+    - When clicked: Activates this tool and activates the pencil tool with the simple ink.
+    - If active: left/right clicking onto a color group's color will:
+      - select the foreground/background color,
+      - activate the pencil tool with the simple ink.
+  - Button **Add to Palette**
+    - When clicked: Activates this tool and activates the pencil tool with the shading ink.
+    - If active: clicking onto a color group's color will:
+      - add that color group to the active palette,
+      - select that range of colors,
+      - activate the pencil tool with the shading ink.
+  - Button **Replace Palette**
+    - When clicked: Activates this tool and activates the pencil tool with the shading ink.
+    - If active: clicking onto a color group's color will:
+      - replace the active palette with that color group,
+      - select that range of colors,
+      - activate the pencil tool with the shading ink.
+  - Button **Select \<input>/\<target> Groups**
+    - When clicked:
+      - Activates this tool.
+    - If active:
+      - left clicking onto a color group's color will set the internal \<input> palette to that color group;
+      - right clicking onto a color group's color will set the internal \<target> palette to that color group;
+        - the <target> group must have the same amount of colors as the \<input> group;
+  - Button **Replace Colors in Selection**
+    - When clicked and if the \<input> and \<target> group have previously been selected and the \<target> group has the same amount of colors as the \<input> group:
+        - replaces all colors that match the \<input> group's colors in the selected layers/frames/cels, with the colors of the \<target> group. This replacement will be done by the index of the color in both color groups.
+- Paged Color Group List
+  - Button **▲**: Move the color group selection upward. Wraps around.
+  - Button **▼**: Move the color group selection downward. Wraps around.
+  - Button **|<**: Go to the first color group page.
+  - Button **<<**: Go several color group pages back.
+  - Button **<**: Go one color group pages back.
+  - Button **>**: Go one color group pages forward.
+  - Button **>>**: Go several color group pages forward.
+  - Button **>|**: Go to the last color group page.
+
 # Aseprite Compatibility
 The following aseprite versions have been tested successfully for compatibility with this extension:
 
@@ -43,12 +115,15 @@ However, it won't be removed in case anyone prefers the simpler dialog.
 # Changelog
 - Ideas
   - shading tool optimization: check if color group is already within the palette to not needlessly grow the palette
-  - tool: swap palette of selected layers/cels/frames
   - middle mouse click to remove color from color group (?)
 - branch master (to be tag 2.1.0)
+  - Removed the `Guide` tab as the explanation was getting to big for the dialog. If you need documentation, refer to the readme document.
   - `Edit Groups` tab:
-    - Added tool `color retriever`: retrieve palette from all frames of the selected layers/cels/frames. Pixels that are fully transparent (alpha = 255) are ignored.
+    - Added button `color retriever`: retrieve palette from all frames of the selected layers/cels/frames. Pixels that are fully transparent (alpha = 255) are ignored.
       - The retrieved colors are automatically sorted: primarily by hue, and brighter colors to the right. Visual pleasing color sorting is difficult, some manual correction might still be necessary.
+  - `Tools` tab:
+    - Added button **Select \<input>/\<target> Groups**.
+    - Added functionality to the `Replace Colors in Selection` button.
 - tag 2.0.0
   - `Color Groups` dialog changed:
     - General:

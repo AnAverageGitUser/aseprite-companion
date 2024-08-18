@@ -9,7 +9,8 @@ search = dofile("./search.lua")
 local plugin_prefs
 local last_page
 local selected_tool = "tools_shading_add"
-local tool_use_replace_from = {}
+local tool_replace_input_real_index
+local tool_replace_target_real_index
 local groups_folder_path = app.fs.userConfigPath .. "groups\\"
 local fast_forward_pages = 5
 local active_page = 1
@@ -57,22 +58,6 @@ function get_color_group_labels_for_dropdown(index)
     return tbl
 end
 
-
-local quick_guide_text = {
-    "--- Mode ---",
-    "Select the group to edit.",
-    "[Add Colors] Adds selected color/s from palette to the selected group.",
-    "[Clear Colors] Clears all colors from selected group.",
-    "[Rename] Change the selected group name to the {Group Name} entry.",
-    "[Save] Saves with {File Name} entry.",
-    "[Load] Loads the {File Name} entry.",
-    "[Open Folder] Open your color groups folder. Useful to get an existing file name to load.",
-    "--- Groups ---",
-    "Simply click any color to set it as the foreground color.",
-    "[Refresh] Refresh all the groups colors. Useful if palette was modified.",
-    "[Prev] [Next] Cycle color groups pages.",
-}
-
 function is_default_table_in_memory()
     if #search.get_all_labels() ~= 0 then
         return false
@@ -99,13 +84,20 @@ function save_prefs()
     plugin_prefs.color_groups = json.encode(prefs.color_groups)
 end
 function init_globals(plugin_p)
-    if plugin_p.preferences.color_group_dialog == nil
-        or plugin_p.preferences.color_group_dialog.version == nil
-        or plugin_p.preferences.color_group_dialog.version ~= prefs.version
-    then
+    if plugin_p.preferences.color_group_dialog == nil then
         plugin_p.preferences.color_group_dialog = {}
         plugin_prefs = plugin_p.preferences.color_group_dialog
         save_prefs()
+    elseif plugin_p.preferences.color_group_dialog.version ~= prefs.version then
+        if plugin_p.preferences.color_group_dialog.version == "2.0.0" then
+            -- if the prefs version is compatible, overwrite the old version
+            plugin_p.preferences.color_group_dialog = prefs.version
+        else
+            -- if the prefs version is incompatible, we have to reset the settings
+            plugin_p.preferences.color_group_dialog = {}
+            plugin_prefs = plugin_p.preferences.color_group_dialog
+            save_prefs()
+        end
     else
         plugin_prefs = plugin_p.preferences.color_group_dialog
     end
@@ -114,6 +106,7 @@ function init_globals(plugin_p)
     prefs.last_save_file = plugin_prefs.last_save_file
     prefs.last_search_and = plugin_prefs.last_search_and
     prefs.last_search_or = plugin_prefs.last_search_or
+    prefs.last_search_num_colors = plugin_prefs.last_search_num_colors
     prefs.num_color_groups_per_page = plugin_prefs.num_color_groups_per_page
     prefs.selection_visible = plugin_prefs.selection_visible
     prefs.labels_visible = plugin_prefs.labels_visible
@@ -135,11 +128,6 @@ function update_groups_view(dialog)
     color_groups_pages(dialog, prefs.num_color_groups_per_page, search, active_page)
 end
 
-function update_guide_visibility(dialog, visible)
-    for i = 1, #quick_guide_text do
-        dialog:modify{ id="guide"..tostring(i), visible=visible }
-    end
-end
 function update_view_visibility(dialog, visible)
     dialog:modify{ id="view_groups_less", visible=visible }
     dialog:modify{ id="view_groups", visible=visible }
@@ -150,7 +138,7 @@ end
 function update_edit_mode_visibility(dialog, visible)
     dialog:modify{ id="edit_mode_add_colors", visible=visible }
     dialog:modify{ id="edit_mode_clear_colors", visible=visible }
-    dialog:modify{ id="edit_mode_add_colors_from_layers", visible=visible }
+    dialog:modify{ id="edit_mode_add_colors_from_selection", visible=visible }
     dialog:modify{ id="edit_mode_rename", visible=visible }
 end
 function update_save_load_visibility(dialog, visible)
@@ -181,6 +169,7 @@ function update_tools_visibility(dialog, visible)
     dialog:modify{ id="tools_pencil", visible=visible }
     dialog:modify{ id="tools_shading_add", visible=visible }
     dialog:modify{ id="tools_shading_replace", visible=visible }
+    dialog:modify{ id="tools_replace_select", visible=visible }
     dialog:modify{ id="tools_replace", visible=visible }
 end
 
@@ -321,14 +310,17 @@ function add_color_group_row(dialog, index)
                     elseif ev.button == MouseButton.RIGHT then
                         app.bgColor = ev.color
                     end
-                elseif selected_tool == "tools_shading_add" and app.sprite then
+                elseif selected_tool == "tools_shading_add" then
+                    if not app.sprite then
+                        alert_extended.alert_error("This only works if a sprite is active.")
+                        return
+                    end
                     local pre_add = #app.sprite.palettes[1]
 
                     local current_color_group = search.get_color_group(shade_index)
                     app.sprite.palettes[1]:resize(#app.sprite.palettes[1] + #current_color_group.colors)
                     for i = 1, #current_color_group.colors do
                         local color = current_color_group.colors[i]
-                        --app.command.AddColor { color=Color{ r=color.r, g=color.g, b=color.b, a=color.a } } -- does not work
                         app.sprite.palettes[1]:setColor(pre_add - 1 + i, Color{ r=color.r, g=color.g, b=color.b, a=color.a })
                     end
                     local post_add = #app.sprite.palettes[1]
@@ -343,7 +335,11 @@ function add_color_group_row(dialog, index)
                     -- we want the shading ink but we have to switch back and forth for the color range to update
                     app.command.SetInkType { type = Ink.SIMPLE }
                     app.command.SetInkType { type = Ink.SHADING }
-                elseif selected_tool == "tools_shading_replace" and app.sprite then
+                elseif selected_tool == "tools_shading_replace" then
+                    if not app.sprite then
+                        alert_extended.alert_error("This only works if a sprite is active.")
+                        return
+                    end
                     local current_color_group = search.get_color_group(shade_index)
                     app.sprite.palettes[1]:resize(#current_color_group.colors)
                     for i = 1, #current_color_group.colors do
@@ -362,15 +358,15 @@ function add_color_group_row(dialog, index)
                     -- we want the shading ink but we have to switch back and forth for the color range to update
                     app.command.SetInkType { type = Ink.SIMPLE }
                     app.command.SetInkType { type = Ink.SHADING }
-                elseif selected_tool == "tools_replace" and app.sprite then
-                    -- TODO
-                    app.alert{
-                        title = "Aseprite Companion: TODO",
-                        text = {
-                            "This is not implemented yet."
-                        },
-                        buttons = { "Close" }
-                    }
+                elseif selected_tool == "tools_replace_select" then
+                    local real_index = search.get_real_color_group_index(shade_index)
+                    if ev.button == MouseButton.LEFT then
+                        tool_replace_input_real_index = real_index
+                    elseif ev.button == MouseButton.RIGHT then
+                        tool_replace_target_real_index = real_index
+                    end
+                else
+                    alert_extended.alert_error("Internal error: The active tool is unknown.")
                 end
             end
         }
@@ -400,17 +396,68 @@ function update_navigation(dialog)
     dialog:modify{ id = "nav-next-fast", enabled = enable_next }
     dialog:modify{ id = "nav-last", enabled = enable_next }
 end
-
-return function(plugin, dialog_title, fn_on_close)
-    function tab_guide(dialog)
-        local tab_id = "tab_guide"
-        dialog:tab{ id=tab_id, text="Guide" }
-        for i = 1, #quick_guide_text do
-            dialog
-                :newrow()
-                :label{ id="guide"..tostring(i), text = quick_guide_text[i], visible=prefs.last_opened_tab == tab_id }
+function for_selection_do(fn_exec_on_cel)
+    if not app.sprite then
+        alert_extended.alert_error("This only works if a sprite is active.")
+        return
+    end
+    if not app.range or app.range.type == RangeType.EMPTY then
+        alert_extended.alert_error({
+            "Nothing is selected.",
+            "First select layers, frames or cels.",
+        })
+        return
+    end
+    if app.range.type == RangeType.LAYERS then
+        local layers = app.range.layers
+        for i = 1,#layers do
+            local layer = app.range.layers[i]
+            if layer.isGroup then
+                for j = 1,#layer.layers do
+                    local inner_layer = layer.layers[j]
+                    for k = 1,#inner_layer.cels do
+                        local cel = inner_layer.cels[k]
+                        fn_exec_on_cel(cel)
+                    end
+                end
+            else
+                for k = 1,#layer.cels do
+                    local cel = layer.cels[k]
+                    fn_exec_on_cel(cel)
+                end
+            end
+        end
+    elseif app.range.type == RangeType.FRAMES then
+        local layers = app.sprite.layers
+        for i = 1, #layers do
+            local layer = layers[i]
+            if layer.isGroup then
+                for inner_i = 1,#layer.layers do
+                    local inner_layer = layer.layers[inner_i]
+                    for j = 1, #app.range.frames do
+                        local frame = app.range.frames[j]
+                        local cel = inner_layer:cel(frame)
+                        fn_exec_on_cel(cel)
+                    end
+                end
+            else
+                for j = 1, #app.range.frames do
+                    local frame = app.range.frames[j]
+                    local cel = layer:cel(frame)
+                    fn_exec_on_cel(cel)
+                end
+            end
+        end
+    elseif app.range.type == RangeType.CELS then
+        local cels = app.range.cels
+        for i = 1, #cels do
+            local cel = cels[i]
+            fn_exec_on_cel(cel)
         end
     end
+end
+
+return function(plugin, dialog_title, fn_on_close)
     function tab_view(dialog)
         local tab_id = "tab_view"
         dialog
@@ -583,6 +630,7 @@ return function(plugin, dialog_title, fn_on_close)
             visible = prefs.last_opened_tab == tab_id,
             onclick = function()
                 if search.empty() then
+                    alert_extended.alert_error("No color group is selected.")
                     return
                 end
                 local edit_mode_group_name = dialog.data.edit_mode_group_name
@@ -601,7 +649,12 @@ return function(plugin, dialog_title, fn_on_close)
             text = "Add Colors",
             visible = prefs.last_opened_tab == tab_id,
             onclick = function()
-                if not app.sprite or search.empty() then
+                if not app.sprite then
+                    alert_extended.alert_error("This only works if a sprite is active.")
+                    return
+                end
+                if search.empty() then
+                    alert_extended.alert_error("No color group is selected.")
                     return
                 end
 
@@ -629,6 +682,7 @@ return function(plugin, dialog_title, fn_on_close)
             visible = prefs.last_opened_tab == tab_id,
             onclick = function()
                 if search.empty() then
+                    alert_extended.alert_error("No color group is selected.")
                     return
                 end
                 local group_idx = selection.index()
@@ -641,55 +695,29 @@ return function(plugin, dialog_title, fn_on_close)
         }
         :newrow()
         :button {
-            id = "edit_mode_add_colors_from_layers",
+            id = "edit_mode_add_colors_from_selection",
             text = "Add Palette of Selected Layers/Cels/Frames",
             visible = prefs.last_opened_tab == tab_id,
             onclick = function()
-                if not app.sprite or search.empty() or not app.range or not app.range.layers then
+                if search.empty() then
+                    alert_extended.alert_error("No color group is selected.")
                     return
                 end
                 local color_group_32bit = {}
-                if app.range.type == RangeType.LAYERS then
-                    local layers = app.range.layers
-                    for i = 1,#layers do
-                        local layer = app.range.layers[i]
-                        if layer.isGroup then
-                            for inner_i = 1,#layer.layers do
-                                local inner_layer = layer.layers[inner_i]
-                                add_colors_from_single_layer(color_group_32bit, inner_layer)
-                            end
-                        else
-                            add_colors_from_single_layer(color_group_32bit, layer)
-                        end
+                for_selection_do(function (cel)
+                    if cel == nil then
+                        return
                     end
-                elseif app.range.type == RangeType.FRAMES then
-                    local layers = app.sprite.layers
-                    for i = 1, #layers do
-                        local layer = layers[i]
-                        if layer.isGroup then
-                            for inner_i = 1,#layer.layers do
-                                local inner_layer = layer.layers[inner_i]
-                                for j = 1, #app.range.frames do
-                                    local frame = app.range.frames[j]
-                                    add_colors_from_single_frame(color_group_32bit, inner_layer, frame)
-                                end
-                            end
-                        else
-                            for j = 1, #app.range.frames do
-                                local frame = app.range.frames[j]
-                                add_colors_from_single_frame(color_group_32bit, layer, frame)
-                            end
-                        end
+                    local image = cel.image
+                    if image == nil then
+                        return
                     end
-                elseif app.range.type == RangeType.CELS then
-                    local cels = app.range.cels
-                    for i = 1, #cels do
-                        local cel = cels[i]
-                        add_colors_from_single_cel(color_group_32bit, cel)
+
+                    for px_iter in image:pixels() do
+                        local px_32bit = px_iter()
+                        insert_color_if_not_contained(color_group_32bit, px_32bit)
                     end
-                else
-                    return
-                end
+                end)
                 local sort_these_colors = convert_32bit_color_array_to_table_colors(color_group_32bit)
                 local fn_color_ordinal = function(r, g, b)
                     local h, s, v = rgb_to_hsv(r, g, b)
@@ -733,6 +761,7 @@ return function(plugin, dialog_title, fn_on_close)
                 visible = prefs.last_opened_tab == tab_id,
                 onclick = function()
                     if search.empty() then
+                        alert_extended.alert_error("No color group is selected.")
                         return
                     end
                     local label = dialog.data.label_input
@@ -775,6 +804,7 @@ return function(plugin, dialog_title, fn_on_close)
                 visible = prefs.last_opened_tab == tab_id,
                 onclick = function()
                     if search.empty() then
+                        alert_extended.alert_error("No color group is selected.")
                         return
                     end
                     local label = dialog.data.label_labels_dropdown
@@ -845,7 +875,7 @@ return function(plugin, dialog_title, fn_on_close)
             }
             :combobox{
                 id = "search_num_color_filter",
-                label = "Number of Colors in Group",
+                label = "Number of Colors",
                 visible = prefs.last_opened_tab == tab_id,
                 options = search.get_all_color_group_lengths(),
             }
@@ -899,10 +929,9 @@ return function(plugin, dialog_title, fn_on_close)
                 text = "Select Primary/Secondary Color",
                 visible = prefs.last_opened_tab == tab_id,
                 onclick = function()
-                    if not app.sprite then
-                        return
-                    end
                     selected_tool = "tools_pencil"
+                    app.tool = "pencil"
+                    app.command.SetInkType { type = Ink.SIMPLE }
                 end
             }
             :button{
@@ -912,6 +941,8 @@ return function(plugin, dialog_title, fn_on_close)
                 visible = prefs.last_opened_tab == tab_id,
                 onclick = function()
                     selected_tool = "tools_shading_add"
+                    app.tool = "pencil"
+                    app.command.SetInkType { type = Ink.SHADING }
                 end
             }
             :button{
@@ -922,22 +953,95 @@ return function(plugin, dialog_title, fn_on_close)
                     selected_tool = "tools_shading_replace"
                 end
             }
+            :newrow()
             :button{
-                id = "tools_replace",
+                id = "tools_replace_select",
                 label = "Color Group Replace",
-                text = "Replace Colors in Selected Layers",
+                text = "Select <input>/<target> Groups",
                 visible = prefs.last_opened_tab == tab_id,
                 onclick = function()
-                    selected_tool = "tools_replace"
-                    app.alert{
-                        title = "Aseprite Companion: TODO",
-                        text = {
-                            "This is not implemented yet."
-                        },
-                        buttons = { "Close" }
-                    }
-                    -- TODO
-                    --https://www.aseprite.org/api/command/ReplaceColor#replacecolor
+                    selected_tool = "tools_replace_select"
+                end
+            }
+            :button{
+                id = "tools_replace",
+                text = "Replace Colors in Selection",
+                visible = prefs.last_opened_tab == tab_id,
+                onclick = function()
+                    if not app.sprite then
+                        alert_extended.alert_error("Replacing colors is only possible if a sprite is active.")
+                        return
+                    end
+                    if app.sprite.colorMode == ColorMode.RGB then
+                        -- continue, this is the mode we want
+                    elseif app.sprite.colorMode == ColorMode.GRAY then
+                        alert_extended.alert_error("Replacing colors is only implemented for RGBA images. The active sprite is of type 'ColorMode.GRAY'.")
+                        return
+                    elseif app.sprite.colorMode == ColorMode.INDEXED then
+                        alert_extended.alert_error("Replacing colors is only implemented for RGBA images. The active sprite is of type 'ColorMode.INDEXED'.")
+                        return
+                    elseif app.sprite.colorMode == ColorMode.TILEMAP then
+                        alert_extended.alert_error("Replacing colors is only implemented for RGBA images. The active sprite is of type 'ColorMode.TILEMAP'.")
+                        return
+                    else
+                        alert_extended.alert_error("Replacing colors is only implemented for RGBA images. The active sprite is of type unknown.")
+                        return
+                    end
+                    if tool_replace_input_real_index == nil then
+                        alert_extended.alert_error("The <input> group must be selected first.")
+                        return
+                    end
+                    if tool_replace_target_real_index == nil then
+                        alert_extended.alert_error("The <target> group must be selected first.")
+                        return
+                    end
+                    local group_input = search.get_real_color_group(tool_replace_input_real_index)
+                    local group_target = search.get_real_color_group(tool_replace_target_real_index)
+                    if #group_input.colors ~= #group_target.colors then
+                        alert_extended.alert_error({
+                            "The amount of colors in the <input> group must be equal to the amount of colors in the <target> group.",
+                            "",
+                            "<input> group '" .. group_input.name .. "' has " .. tostring(#group_input.colors) .. " colors.",
+                            "<target> group '" .. group_target.name .. "' has " .. tostring(#group_target.colors) .. " colors.",
+                        })
+                        return
+                    end
+
+                    local worked_on_images = {}
+                    app.transaction("Aseprite Companion: Replace Colors", function()
+                        local target_colors = group_target.colors
+                        for_selection_do(function (cel)
+                            if cel == nil then
+                                return
+                            end
+                            local image = cel.image
+                            if image == nil then
+                                return
+                            end
+                            if search.contains(worked_on_images, image.id) then
+                                -- if cells are linked, they share the same image,
+                                -- we do not want to swap colors on the same image more than once
+                                return
+                            end
+                            table.insert(worked_on_images, image.id)
+
+                            for px_iter in image:pixels() do
+                                local px_32bit = px_iter()
+                                local r = app.pixelColor.rgbaR(px_32bit)
+                                local g = app.pixelColor.rgbaG(px_32bit)
+                                local b = app.pixelColor.rgbaB(px_32bit)
+                                local a = app.pixelColor.rgbaA(px_32bit)
+                                for i = 1, #group_input.colors do
+                                    local from_color = group_input.colors[i]
+                                    if from_color.r == r and from_color.g == g and from_color.b == b and from_color.a == a then
+                                        local to_color = app.pixelColor.rgba(target_colors[i].r, target_colors[i].g, target_colors[i].b, target_colors[i].a)
+                                        px_iter(to_color)
+                                    end
+                                end
+                            end
+                        end)
+                        app.command.Refresh()
+                    end)
                 end
             }
             :newrow()
@@ -1087,7 +1191,6 @@ return function(plugin, dialog_title, fn_on_close)
         title = dialog_title,
         onclose = fn_on_close,
     }
-    tab_guide(dialog)
     tab_view(dialog)
     tab_save_load(dialog)
     tab_edit_mode(dialog)
@@ -1102,7 +1205,6 @@ return function(plugin, dialog_title, fn_on_close)
         onchange=function(ev)
             prefs.last_opened_tab = ev.tab
 
-            update_guide_visibility(dialog, ev.tab == "tab_guide")
             update_view_visibility(dialog, ev.tab == "tab_view")
             update_edit_mode_visibility(dialog, ev.tab == "tab_edit_mode")
             update_save_load_visibility(dialog, ev.tab == "tab_save_load")
