@@ -26,7 +26,7 @@ function create_color_groups(num_table_entries)
     return color_groups
 end
 local prefs = {
-    version = "2.0.0",
+    version = "2.1.0",
     last_opened_tab = "tab_edit_mode",
     last_save_file = "",
     last_search_and = "",
@@ -97,72 +97,6 @@ function save_prefs()
     plugin_prefs.selection_visible = prefs.selection_visible
     plugin_prefs.labels_visible = prefs.labels_visible
     plugin_prefs.color_groups = json.encode(prefs.color_groups)
-end
-function save_color_groups(name)
-    local path = groups_folder_path .. name .. ".json"
-    if name == "" then
-        alert_extended.alert_error{
-            "File Name entry is empty.",
-            "Please specify a name."
-        }
-        return
-    end
-
-    if file_extended.file_exists(path) then
-        local result = app.alert{
-            title = "Aseprite Companion: Overwrite file?",
-            text = {
-                "A file with the same name already exists.",
-                "The file in question:",
-                "" .. path,
-                "",
-                "Do you want to overwrite this file?"
-            },
-            buttons = { "Yes: Overwrite File", "No" }
-        }
-        if result ~= 1 then
-            return
-        end
-    end
-
-    os.execute("mkdir " .. groups_folder_path)
-    table_extended.save(prefs.color_groups, path)
-    alert_extended.alert_info{
-        "Saved file successfully to:",
-        "" .. path
-    }
-end
-function load_color_groups(name, dialog)
-    local path = groups_folder_path .. name .. ".json"
-    if file_extended.file_exists(path) then
-        if not is_default_table_in_memory() then
-            local result = app.alert{
-                title = "Aseprite Companion: Load file?",
-                text = {
-                    "The currently loaded color groups will be discarded and replaced by the loaded file.",
-                    "Maybe you want to save the current color groups first.",
-                    "",
-                    "Do you want to load the file and replace the current color groups?"
-                },
-                buttons = { "Yes: Load File", "No" }
-            }
-            if result ~= 1 then
-                return
-            end
-        end
-
-        prefs.color_groups = table_extended.load(path)
-        reset_selection(prefs.color_groups, active_page)
-        update_bottom_label_view(dialog)
-        update_groups_view(dialog)
-    else
-        alert_extended.alert_error{
-            "Trying to load non existent file:",
-            "" .. path,
-            "",
-            "Please specify an existing file name. You may use [Open Folder] to find the file name."
-        }
-    end
 end
 function init_globals(plugin_p)
     if plugin_p.preferences.color_group_dialog == nil
@@ -569,11 +503,12 @@ return function(plugin, dialog_title, fn_on_close)
                 text = "Save",
                 visible = prefs.last_opened_tab == tab_id,
                 onclick = function()
-                    local file = dialog.data.save_load_filename
-                    prefs.last_save_file = file
+                    local name = dialog.data.save_load_filename
+                    prefs.last_save_file = name
                     save_prefs()
 
-                    save_color_groups(file)
+                    local file_path = groups_folder_path .. name .. ".json"
+                    table_extended.save_color_groups(prefs.color_groups, groups_folder_path, file_path, name)
                 end
             }
             :button {
@@ -581,15 +516,21 @@ return function(plugin, dialog_title, fn_on_close)
                 text = "Load",
                 visible = prefs.last_opened_tab == tab_id,
                 onclick = function()
-                    local file = dialog.data.save_load_filename
-                    prefs.last_save_file = file
+                    local name = dialog.data.save_load_filename
+                    prefs.last_save_file = name
                     save_prefs()
 
-                    load_color_groups(file, dialog)
-                    save_prefs()
-
-                    dialog:modify{ id = "label_labels_dropdown", options = get_color_group_labels_for_dropdown(selection.index()) }
-                    dialog:modify{ id = "search_num_color_filter", options = search.get_all_color_group_lengths() }
+                    local file_path = groups_folder_path .. name .. ".json"
+                    local loaded_groups_or_nil = table_extended.load_color_groups(file_path, is_default_table_in_memory)
+                    if loaded_groups_or_nil ~= nil then
+                        prefs.color_groups = loaded_groups_or_nil
+                        reset_selection(prefs.color_groups, active_page)
+                        update_bottom_label_view(dialog)
+                        update_groups_view(dialog)
+                        save_prefs()
+                        dialog:modify{ id = "label_labels_dropdown", options = get_color_group_labels_for_dropdown(selection.index()) }
+                        dialog:modify{ id = "search_num_color_filter", options = search.get_all_color_group_lengths() }
+                    end
                 end
             }
             :button {
