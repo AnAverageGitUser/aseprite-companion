@@ -16,6 +16,21 @@ I recommend assigning a shortcut to the color groups dialog, e.g. `CTRL + G`.
 This can be done over the menu `Edit > Keyboard Shortcuts...`.
 
 `Color Groups` Dialog:
+
+- Paged Color Group List
+  - **Selection** button **▲**: Move the color group selection upward. Wraps around.
+  - **Selection** button **▼**: Move the color group selection downward. Wraps around.
+  - **Pages** button **|<**: Go to the first color group page.
+  - **Pages** button **<<**: Go several color group pages back.
+  - **Pages** button **<**: Go one color group pages back.
+  - **Pages** button **>**: Go one color group pages forward.
+  - **Pages** button **>>**: Go several color group pages forward.
+  - **Pages** button **>|**: Go to the last color group page.
+
+![labels and selection shown](img/color_groups/full.png)
+![search with labels shown](img/color_groups/full_label_search.png)
+![labels and selection hidden](img/color_groups/full_small.png)
+
 - Tab **View**
   - Groups per Page
     - With this setting your can change indirectly change the height of the dialog. Depending on your resolution you might want to use more or less color groups that are visible per page. Higher values are worse than lower values regarding performance.
@@ -23,24 +38,36 @@ This can be done over the menu `Edit > Keyboard Shortcuts...`.
     - Button **>**: increase the number of shown color groups per page by one, up to a maximum of 20.
   - **Selector** button **Show / Hide**: show or hide the selection labels and buttons. You can hide them if you are done editing your color groups and want to remove clutter from the dialog.
   - **Labels** button **Show / Hide**: show or hide the labels above the color groups. You can hide them if you are not using labels much to remove clutter from the dialog.
+
+![view.png](img/color_groups/view.png)
+
 - Tab **Save/Load**
   - Input **File Name**: enter a file name that you want to your color groups to be saved to.
   - Button **Save**: saves your color groups to the entered file name.
   - Button **Load**: loads your color groups from the entered file name.
   - Button **Open Folder**: open your color groups folder. Useful to get an existing file name to load.
   - Button **Reset All Loaded Color Groups**: clears and reset all loaded color groups for a clean start. If this is not sufficient delete (e.g. due to bugs) the `<aseprite>/extensions/aseprite-companion/__pref.lua` file to get a clean slate.
+
+![save_load.png](img/color_groups/save_load.png)
+
 - Tab **Edit Groups**
   - Input **Group Name**: enter a name that you want to set a group's name to.
   - Button **Rename Group**: renames the selected group to the given name.
   - Button **Add Colors**: adds selected colors from the active palette to the selected group.
   - Button **Clear Colors**: clears all colors from selected group.
   - Button **Add Palette of Selected Layers/Cels/Frames**: replaces the selected color group's colors with the ones found in the selected layers/cels/frames.
+
+![edit_groups.png](img/color_groups/edit_groups.png)
+
 - Tab **Label**
   - Dropdown **Existing Labels**: lists all existing labels as an overview.
   - Input **Add Label**: enter a label that you would like to add to a group. Whitespace characters are replaced by underscores. Empty labels are not allowed.
   - Button **Add**: adds the entered label to the selected group. 
   - Dropdown **Remove Labels**: lists all labels that the selected group has. Select the label you want to remove here.
-  - Button **Remove**: removes the selected label from the selected group. 
+  - Button **Remove**: removes the selected label from the selected group.
+
+![label.png](img/color_groups/label.png)
+
 - Tab **Search**
   - Dropdown **Existing Labels**: lists all existing labels as an overview.
   - Input **All of (AND)**: enter multiple labels by separating them with a space by which you want to filter the groups. All of these labels must be present in a group for that group to be shown.
@@ -48,6 +75,9 @@ This can be done over the menu `Edit > Keyboard Shortcuts...`.
   - Dropdown **Number of Colors**: select the number of colors your want shown groups to have.
   - Button **Search**: search according to the specified search rules. Labels that do not exist or are duplicate within the search label inputs will be removed from their text field, so you can see what really was searched for.
   - Button **Clear Search**: clears the search and shows all color groups.
+
+![search.png](img/color_groups/search.png)
+
 - Tab **Tools**
   - Button **Select Primary/Secondary Color**
     - This is the active default tool.
@@ -82,15 +112,8 @@ This can be done over the menu `Edit > Keyboard Shortcuts...`.
       - Activates this tool.
     - If active:
       - clicking onto a color group's color will check if any colors of the selected layers/frames/cels are not within that color group and list their RGBA values if there were any.
-- Paged Color Group List
-  - Button **▲**: Move the color group selection upward. Wraps around.
-  - Button **▼**: Move the color group selection downward. Wraps around.
-  - Button **|<**: Go to the first color group page.
-  - Button **<<**: Go several color group pages back.
-  - Button **<**: Go one color group pages back.
-  - Button **>**: Go one color group pages forward.
-  - Button **>>**: Go several color group pages forward.
-  - Button **>|**: Go to the last color group page.
+
+![tools.png](img/color_groups/tools.png)
 
 # Aseprite Compatibility
 The following aseprite versions have been tested successfully for compatibility with this extension:
@@ -120,7 +143,9 @@ However, it won't be removed in case anyone prefers the simpler dialog.
 # Changelog
 - Ideas
   - shading tool optimization: check if color group is already within the palette to not needlessly grow the palette
-  - middle mouse click to remove color from color group (?)
+    - this is put on halt: more often I use the replace palette mode
+  - middle mouse click to remove color from color group
+    - this is put on halt: I don't really need that right now
 - branch master (to be tag 2.1.0)
   - Removed the `Guide` tab as the explanation was getting to big for the dialog. If you need documentation, refer to the readme document.
   - `Edit Groups` tab:
