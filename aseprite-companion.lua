@@ -3,6 +3,7 @@ colorgroupsdialog = dofile("./color-groups/color-groups.lua")
 alert_extended = dofile("./shared/alert-extended.lua")
 
 local color_groups_dialog_instance
+local fn_foreground_color_changed
 
 function init(plugin)
     plugin:newMenuSeparator{
@@ -25,7 +26,7 @@ function init(plugin)
             end
 
             if color_groups_dialog_instance == nil then
-                color_groups_dialog_instance = colorgroupsdialog(
+                color_groups_dialog_instance, fn_foreground_color_changed = colorgroupsdialog(
                     plugin,
                     "Aseprite Companion: Color Groups",
                     function()
@@ -36,9 +37,15 @@ function init(plugin)
             else
                 color_groups_dialog_instance:close()
                 color_groups_dialog_instance = nil
+                fn_foreground_color_changed = nil
             end
         end
     }
+    app.events:on('fgcolorchange', function()
+        if fn_foreground_color_changed ~= nil then
+            fn_foreground_color_changed()
+        end
+    end)
 
     plugin:newCommand {
         id = "color_shades",

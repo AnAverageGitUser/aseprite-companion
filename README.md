@@ -116,6 +116,12 @@ This can be done over the menu `Edit > Keyboard Shortcuts...`.
       - Activates this tool.
     - If active:
       - clicking onto a color group's color will check if any colors of the selected layers/frames/cels are not within that color group and list their RGBA values if there were any.
+  - **Color Picker** button **Add Color on Changed Foreground Color**
+    - When clicked:
+      - Activates this tool.
+      - Activates the color picker / eyedropper tool.
+    - If active:
+      - changing the selected foreground color will add that color to the selected color group. If you want to create your color groups individually from the pixels of an opened image, this is the tool for you.
 
 ![tools.png](img/color_groups/tools.png)
 
@@ -159,6 +165,7 @@ However, it won't be removed in case anyone prefers the simpler dialog.
     - Added button **Select \<input>/\<target> Groups**.
     - Added functionality to the `Replace Colors in Selection` button.
     - Added button **Check for Stray Colors**.
+    - Added button **Add Color on Changed Foreground Color**.
 - tag 2.0.0
   - `Color Groups` dialog changed:
     - General:

@@ -8,7 +8,7 @@ search = dofile("./search.lua")
 
 local plugin_prefs
 local last_page
-local selected_tool = "tools_shading_add"
+local selected_tool = "tools_pencil"
 local tool_replace_input_real_index
 local tool_replace_target_real_index
 local groups_folder_path = app.fs.userConfigPath .. "groups\\"
@@ -172,6 +172,7 @@ function update_tools_visibility(dialog, visible)
     dialog:modify{ id="tools_replace_select", visible=visible }
     dialog:modify{ id="tools_replace", visible=visible }
     dialog:modify{ id="tools_check_pixels", visible=visible }
+    dialog:modify{ id="tools_color_picker", visible=visible }
 end
 
 function update_selection_visibility(dialog, visible)
@@ -410,6 +411,8 @@ function add_color_group_row(dialog, index)
                                 :entry{ label = "Copy Me:", text = colors_not_inside_txt }
                     end
                     info_dlg:show{ wait = true }
+                elseif selected_tool == "tools_color_picker" then
+                    -- do nothing, everything should be done by the callback already
                 else
                     alert_extended.alert_error("Internal error: The active tool is unknown.")
                 end
@@ -1107,6 +1110,17 @@ return function(plugin, dialog_title, fn_on_close)
                 end
             }
             :newrow()
+            :button{
+                id = "tools_color_picker",
+                label = "Color Picker",
+                text = "Add Color on Changed Foreground Color",
+                visible = prefs.last_opened_tab == tab_id,
+                onclick = function()
+                    selected_tool = "tools_color_picker"
+                    app.tool = "eyedropper"
+                end
+            }
+            :newrow()
     end
     function tab_color_groups(dialog)
         dialog
@@ -1295,5 +1309,17 @@ return function(plugin, dialog_title, fn_on_close)
     update_selection_visibility(dialog, prefs.selection_visible)
     update_bottom_label_view(dialog)
 
-    return dialog
+    return dialog, function()
+        if selected_tool ~= "tools_color_picker" then
+            return
+        end
+        if search.empty() then
+            return
+        end
+        local color_group_color = search.get_color_group(selection.index()).colors
+        table.insert(color_group_color, {r=app.fgColor.red, g=app.fgColor.green, b=app.fgColor.blue, a=app.fgColor.alpha})
+        save_prefs()
+        update_groups_view(dialog)
+        dialog:modify{ id = "search_num_color_filter", options = search.get_all_color_group_lengths() }
+    end
 end
