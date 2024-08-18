@@ -915,7 +915,7 @@ return function(plugin, dialog_title, fn_on_close)
             :label {
                 id = "search_term",
                 label = "Term",
-                text = "num_colors_matches ∨ ((a1 ∧ a2 ∧ ... ∧ aN) ∧ (o1 ∨ o2 ∨ ... ∨ oM))",
+                text = "num_colors_matches ∧ (a1 ∧ a2 ∧ ... ∧ aN) ∧ (o1 ∨ o2 ∨ ... ∨ oM)",
                 visible = prefs.last_opened_tab == tab_id
             }
             :combobox{

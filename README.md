@@ -163,7 +163,7 @@ However, it won't be removed in case anyone prefers the simpler dialog.
       - A first space separated list of labels can be provided to search for labels that a color group must all have.
       - A second space separated list of labels can be provided to search for labels that a color group must have at least one of.
       - A number of colors can be selected that a coloring group must contain.
-      - More formally this expression matches a color group: `num_colors_matches ∨ ((and_1 ∧ and_2 ∧ ... ∧ and_N) ∧ (or_1 ∨ or_2 ∨ ... ∨ or_M))`.
+      - More formally this expression matches a color group: `num_colors_matches ∧ (and_1 ∧ and_2 ∧ ... ∧ and_N) ∧ (or_1 ∨ or_2 ∨ ... ∨ or_M)`.
     - Added `Tools` tab:
       - Only one tool can be active at the same time. Activate them by clicking on the tool buttons in this tab.
       - Pencil tool `Select Primary/Secondary Color`: the only mode that was present up until tag v2.0.0 - left/right click on a color within a color group sets the foreground/background brush color. A click on this tool button also activates the pencil tool.

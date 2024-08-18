@@ -59,7 +59,7 @@ function this.search(search_and, search_or, num_colors)
         return
     end
 
-    -- must fulfill clause: num_colors_matches ∨ ((and_1 ∧ and_2 ∧ ... ∧ and_N) ∧ (or_1 ∨ or_2 ∨ ... ∨ or_M))
+    -- must fulfill clause: num_colors_matches ∧ (and_1 ∧ and_2 ∧ ... ∧ and_N) ∧ (or_1 ∨ or_2 ∨ ... ∨ or_M)
     for i=1, #this.color_groups do
         local color_group_labels = this.color_groups[i].labels
         local color_group_num_colors = #this.color_groups[i].colors
