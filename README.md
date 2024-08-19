@@ -130,6 +130,7 @@ The following aseprite versions have been tested successfully for compatibility 
 
 | aseprite version | tested aseprite companion version        |
 |------------------|------------------------------------------|
+| 1.3.7            | 2.1.1                                    |
 | 1.3.2            | 2.1.0, 2.0.0, 1.3.0, 1.2.0, 1.1.2, 1.1.1 |
 | 1.3-beta4        | 1.1.1, 1.1.0, 1.0.0                      |
 
@@ -156,8 +157,8 @@ However, it won't be removed in case anyone prefers the simpler dialog.
     - this is put on halt: more often I use the replace palette mode
   - middle mouse click to remove color from color group
     - this is put on halt: I don't really need that right now
-- branch master
-  - no changes yet
+- branch master (to be tag 2.1.1)
+  - fixed: when removing a label from a group, all remaining labels got overwritten by the removed label
 - tag 2.1.0
   - Removed the `Guide` tab as the explanation was getting to big for the dialog. If you need documentation, refer to the readme document.
   - `Edit Groups` tab:

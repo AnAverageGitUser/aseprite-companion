@@ -74,7 +74,7 @@ function init(plugin)
             app.alert{
                 title="About Aseprite Companion",
                 text={
-                    "Aseprite Companion v2.1.0",
+                    "Aseprite Companion v2.1.1",
                     "An extension providing additional features for Aseprite",
                     "MIT License",
                     "Copyright (c) 2021 Jon Cote",

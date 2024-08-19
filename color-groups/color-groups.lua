@@ -27,7 +27,7 @@ function create_color_groups(num_table_entries)
     return color_groups
 end
 local prefs = {
-    version = "2.1.0",
+    version = "2.1.1",
     last_opened_tab = "tab_edit_mode",
     last_save_file = "",
     last_search_and = "",
@@ -89,7 +89,9 @@ function init_globals(plugin_p)
         plugin_prefs = plugin_p.preferences.color_group_dialog
         save_prefs()
     elseif plugin_p.preferences.color_group_dialog.version ~= prefs.version then
-        if plugin_p.preferences.color_group_dialog.version == "2.0.0" then
+        if plugin_p.preferences.color_group_dialog.version == "2.0.0" or
+            plugin_p.preferences.color_group_dialog.version == "2.1.0"
+        then
             -- if the prefs version is compatible, overwrite the old version
             plugin_p.preferences.color_group_dialog = prefs.version
         else
@@ -864,7 +866,7 @@ return function(plugin, dialog_title, fn_on_close)
                     local new_table = {}
                     for i=1, #color_group.labels do
                         if color_group.labels[i] ~= label then
-                            table.insert(new_table, label)
+                            table.insert(new_table, color_group.labels[i])
                         end
                     end
                     -- if table.remove would be used, "null" values would wander into the json object, thanks lua!
