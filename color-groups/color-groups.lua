@@ -26,13 +26,18 @@ function create_color_groups(num_table_entries)
     end
     return color_groups
 end
+local compatible_versions = {
+    "2.0.0",
+    "2.1.0",
+    "2.1.1",
+}
 local prefs = {
     version = "2.1.1",
     last_opened_tab = "tab_edit_mode",
     last_save_file = "",
     last_search_and = "",
     last_search_or = "",
-    last_search_num_colors = nil,
+    last_search_num_colors = "[ Any ]",
     num_color_groups_per_page = 10,
     selection_visible = true,
     labels_visible = true,
@@ -83,27 +88,7 @@ function save_prefs()
     plugin_prefs.labels_visible = prefs.labels_visible
     plugin_prefs.color_groups = json.encode(prefs.color_groups)
 end
-function init_globals(plugin_p)
-    if plugin_p.preferences.color_group_dialog == nil then
-        plugin_p.preferences.color_group_dialog = {}
-        plugin_prefs = plugin_p.preferences.color_group_dialog
-        save_prefs()
-    elseif plugin_p.preferences.color_group_dialog.version ~= prefs.version then
-        if plugin_p.preferences.color_group_dialog.version == "2.0.0" or
-            plugin_p.preferences.color_group_dialog.version == "2.1.0"
-        then
-            -- if the prefs version is compatible, overwrite the old version
-            plugin_p.preferences.color_group_dialog = prefs.version
-        else
-            -- if the prefs version is incompatible, we have to reset the settings
-            plugin_p.preferences.color_group_dialog = {}
-            plugin_prefs = plugin_p.preferences.color_group_dialog
-            save_prefs()
-        end
-    else
-        plugin_prefs = plugin_p.preferences.color_group_dialog
-    end
-
+function load_prefs()
     prefs.version = plugin_prefs.version
     prefs.last_save_file = plugin_prefs.last_save_file
     prefs.last_search_and = plugin_prefs.last_search_and
@@ -113,6 +98,28 @@ function init_globals(plugin_p)
     prefs.selection_visible = plugin_prefs.selection_visible
     prefs.labels_visible = plugin_prefs.labels_visible
     prefs.color_groups = json.decode(plugin_prefs.color_groups)
+end
+function init_globals(plugin_p)
+    if plugin_p.preferences.color_group_dialog == nil then
+        -- this will match on the first start of the dialog (or after the "__pref.lua" got deleted and aseprite got restarted
+        plugin_p.preferences.color_group_dialog = {}
+        plugin_prefs = plugin_p.preferences.color_group_dialog
+        save_prefs()
+    else
+        plugin_prefs = plugin_p.preferences.color_group_dialog
+    end
+
+    if search.contains(compatible_versions, plugin_prefs.version) then
+        -- if the prefs version is compatible, overwrite the old version
+        plugin_prefs.version = prefs.version
+    else
+        -- if the prefs version is incompatible, we have to reset the settings
+        plugin_p.preferences.color_group_dialog = {}
+        plugin_prefs = plugin_p.preferences.color_group_dialog
+        save_prefs()
+    end
+
+    load_prefs()
 
     last_page = math.tointeger((num_color_groups + prefs.num_color_groups_per_page - 1) / prefs.num_color_groups_per_page)
     reset_selection(prefs.color_groups, active_page)
@@ -927,6 +934,7 @@ return function(plugin, dialog_title, fn_on_close)
                 id = "search_num_color_filter",
                 label = "Number of Colors",
                 visible = prefs.last_opened_tab == tab_id,
+                option = prefs.last_search_num_colors,
                 options = search.get_all_color_group_lengths(),
             }
             :button {
@@ -940,7 +948,8 @@ return function(plugin, dialog_title, fn_on_close)
                     search.search(search_and, search_or, num_colors)
                     prefs.last_search_and = search.get_labels_and()
                     prefs.last_search_or = search.get_labels_or()
-                    prefs.last_search_num_colors = search.get_labels_or()
+                    prefs.last_search_num_colors = search.get_search_num_colors()
+                    save_prefs()
                     dialog:modify{ id = "search_and", text = prefs.last_search_and }
                     dialog:modify{ id = "search_or", text = prefs.last_search_or }
                     dialog:modify{ id = "search_num_color_filter", text = prefs.last_search_num_colors }

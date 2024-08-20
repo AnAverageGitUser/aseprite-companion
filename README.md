@@ -154,11 +154,21 @@ However, it won't be removed in case anyone prefers the simpler dialog.
 # Changelog
 - Ideas
   - shading tool optimization: check if color group is already within the palette to not needlessly grow the palette
-    - this is put on halt: more often I use the replace palette mode
+    - This is put on halt: I use the replace palette mode more often, so this is fine for now.
   - middle mouse click to remove color from color group
-    - this is put on halt: I don't really need that right now
-- branch master (to be tag 2.1.1)
-  - fixed: when removing a label from a group, all remaining labels got overwritten by the removed label
+    - This is put on halt: I don't really need that right now.
+- branch master
+  - no changes yet
+- tag 2.1.1
+  - General:
+    - Fixed: updating the plugin version did not set some variables in all cases, this lead to a non-working dialog.
+  - `Labels` tab:
+    - Fixed: when removing a label from a group, all remaining labels got overwritten by the removed label.
+    - The entries of the `Existing Labels` dropdown are now sorted.
+  - `Search` tab:
+    - Fixed: the `Number of Colors` that are filtered for, were not saved between dialog restarts.
+    - The entries of the `Existing Labels` dropdown are now sorted.
+    - The entries of the `Number of Colors` dropdown are now sorted.
 - tag 2.1.0
   - Removed the `Guide` tab as the explanation was getting to big for the dialog. If you need documentation, refer to the readme document.
   - `Edit Groups` tab:

@@ -143,6 +143,7 @@ function this.get_all_labels()
             ::skip_this_label::
         end
     end
+    table.sort(tbl)
     return tbl
 end
 
@@ -159,6 +160,17 @@ function this.get_all_color_group_lengths()
         table.insert(tbl, tostring(color_group_size))
         ::skip_this::
     end
+    table.sort(tbl, function(a, b)
+        local num1 = tonumber(a, 10)
+        local num2 = tonumber(b, 10)
+        if num1 == nil then
+            num1 = -1
+        end
+        if num2 == nil then
+            num2 = -1
+        end
+        return num1 < num2
+    end)
     return tbl
 end
 
@@ -185,7 +197,10 @@ function this.get_labels_or()
 end
 
 function this.get_search_num_colors()
-    return this.num_colors
+    if this.num_colors == nil then
+        return "[ Any ]"
+    end
+    return tostring(this.num_colors)
 end
 
 
