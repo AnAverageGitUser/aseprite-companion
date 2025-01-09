@@ -157,6 +157,7 @@ However, it won't be removed in case anyone prefers the simpler dialog.
     - This is put on halt: I use the replace palette mode more often, so this is fine for now.
   - middle mouse click to remove color from color group
     - This is put on halt: I don't really need that right now.
+  - search for color palettes that match the selection (layers/cels/frames)
 - branch master
   - no changes yet
 - tag 2.1.1
