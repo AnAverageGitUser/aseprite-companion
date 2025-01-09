@@ -5,6 +5,10 @@ It provides a powerful color groups dialog for grouping colors, naming-, labelin
 Additionally some image processing functions related to color groups are provided too.
 
 A color shades dialog for the creation of simple color shade ramps is also provided.
+If you have more complex needs for creating color shade ramps I suggest you have a look at
+[Chaonic's Palette Helper](https://chaonic.itch.io/aseprite-palette-helper)
+([github](https://github.com/ChaonicTheDeathKitten/Palette-Helper))
+as this tool has more options to create color shades and palettes.
 
 # Installation
  - Download one of the github released `aseprite-companion-vA.B.C.zip` files.
@@ -12,6 +16,14 @@ A color shades dialog for the creation of simple color shade ramps is also provi
  - Select the downloaded `.zip` file in the `Add Extension` prompt.
 
 [Official aseprite plugin documentation](https://www.aseprite.org/api/plugin).
+
+# Showcase
+
+Some screenshots to feast your eyes upon:
+
+![labels and selection shown](img/color_groups/full.png)
+![search with labels shown](img/color_groups/full_label_search.png)
+![labels and selection hidden](img/color_groups/full_small.png)
 
 # Usage
 Aseprite companion's dialogs can be found in the menu `Sprite > [Aseprite Companion]`.
@@ -30,10 +42,6 @@ This can be done over the menu `Edit > Keyboard Shortcuts...`.
   - **Pages** button **>**: Go one color group pages forward.
   - **Pages** button **>>**: Go several color group pages forward.
   - **Pages** button **>|**: Go to the last color group page.
-
-![labels and selection shown](img/color_groups/full.png)
-![search with labels shown](img/color_groups/full_label_search.png)
-![labels and selection hidden](img/color_groups/full_small.png)
 
 - Tab **View**
   - Groups per Page
